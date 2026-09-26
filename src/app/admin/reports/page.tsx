@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { FileSpreadsheet, RefreshCw } from "lucide-react";
 import { Parser } from "json2csv";
+import { adminFetch } from "@/lib/admin-fetch";
 
 export default function AdminReportsPage() {
   const [data, setData] = useState<any>(null);
@@ -10,7 +11,7 @@ export default function AdminReportsPage() {
 
   const fetchReports = () => {
     setLoading(true);
-    fetch("/api/reports")
+    adminFetch("/api/reports")
       .then((res) => res.json())
       .then((d) => {
         if (d.success) setData(d);

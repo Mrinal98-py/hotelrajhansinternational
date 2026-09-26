@@ -9,6 +9,8 @@ import {
   X
 } from "lucide-react";
 
+import { adminFetch } from "@/lib/admin-fetch";
+
 export default function AdminBookingsPage() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,7 +25,7 @@ export default function AdminBookingsPage() {
     if (statusFilter !== "ALL") query.set("status", statusFilter);
     if (search) query.set("search", search);
 
-    fetch(`/api/bookings?${query.toString()}`, { cache: "no-store", headers: { "Cache-Control": "no-cache" } })
+    adminFetch(`/api/bookings?${query.toString()}`)
       .then((res) => res.json())
       .then((d) => {
         if (d.success) setBookings(d.bookings);
@@ -44,10 +46,9 @@ export default function AdminBookingsPage() {
   const updateBookingStatus = async (id: string, newStatus: string) => {
     setUpdating(true);
     try {
-      const res = await fetch(`/api/bookings/${id}`, {
+      const res = await adminFetch(`/api/bookings/${id}`, {
         method: "PUT",
-        cache: "no-store",
-        headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
       const data = await res.json();

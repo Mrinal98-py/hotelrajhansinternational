@@ -4,9 +4,9 @@ import { getSession } from "@/lib/auth";
 
 export const revalidate = 0;
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
-    const session = await getSession();
+    const session = await getSession(request);
     if (!session || (session.role !== "SUPER_ADMIN" && session.role !== "MANAGER")) {
       return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
     }

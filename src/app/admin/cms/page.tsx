@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Save, RefreshCw, CheckCircle } from "lucide-react";
+import { adminFetch } from "@/lib/admin-fetch";
 
 export default function AdminCMSPage() {
   const [settings, setSettings] = useState<Record<string, string>>({});
@@ -11,7 +12,7 @@ export default function AdminCMSPage() {
 
   const fetchCMS = () => {
     setLoading(true);
-    fetch("/api/cms", { cache: "no-store", headers: { "Cache-Control": "no-cache" } })
+    adminFetch("/api/cms")
       .then((res) => res.json())
       .then((d) => {
         if (d.success) setSettings(d.settings);
@@ -33,10 +34,9 @@ export default function AdminCMSPage() {
     setSaving(true);
     setSuccessMsg("");
     try {
-      const res = await fetch("/api/cms", {
+      const res = await adminFetch("/api/cms", {
         method: "PUT",
-        cache: "no-store",
-        headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ settings }),
       });
 

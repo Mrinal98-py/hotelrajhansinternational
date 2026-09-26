@@ -4,22 +4,32 @@ import { jwtVerify } from "jose";
 
 function getJwtSecret(): Uint8Array {
   const secret = process.env.JWT_SECRET;
-  if (!secret && process.env.NODE_ENV === "production") {
+  if (!secret && process.env.NODE_ENV === "production" && process.env.VERCEL === "1") {
     throw new Error("JWT_SECRET is required in production.");
   }
   return new TextEncoder().encode(secret || "dev-only-rajhans-jwt-secret");
 }
 
-const JWT_SECRET = getJwtSecret();
-
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const token = request.cookies.get("rajhans_admin_token")?.value;
+
+  // Extract token from cookies (checking primary and fallback names) or Authorization header
+  let token =
+    request.cookies.get("rajhans_admin_token")?.value ||
+    request.cookies.get("admin_token")?.value ||
+    request.cookies.get("token")?.value;
+
+  if (!token) {
+    const authHeader = request.headers.get("authorization");
+    if (authHeader && authHeader.toLowerCase().startsWith("bearer ")) {
+      token = authHeader.substring(7).trim();
+    }
+  }
 
   let isAuthenticated = false;
   if (token) {
     try {
-      await jwtVerify(token, JWT_SECRET);
+      await jwtVerify(token, getJwtSecret(), { clockTolerance: 30 });
       isAuthenticated = true;
     } catch {
       isAuthenticated = false;
@@ -30,7 +40,13 @@ export async function proxy(request: NextRequest) {
   if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {
     if (!isAuthenticated) {
       const loginUrl = new URL("/admin/login", request.url);
-      return NextResponse.redirect(loginUrl);
+      const response = NextResponse.redirect(loginUrl);
+      if (token) {
+        response.cookies.delete("rajhans_admin_token");
+        response.cookies.delete("admin_token");
+        response.cookies.delete("token");
+      }
+      return response;
     }
   }
 

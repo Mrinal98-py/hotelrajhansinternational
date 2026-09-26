@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Search, Star, Edit, RefreshCw, X } from "lucide-react";
+import { adminFetch } from "@/lib/admin-fetch";
 
 export default function AdminCustomersPage() {
   const [customers, setCustomers] = useState<any[]>([]);
@@ -12,7 +13,7 @@ export default function AdminCustomersPage() {
   const fetchCustomers = () => {
     setLoading(true);
     const query = search ? `?search=${search}` : "";
-    fetch(`/api/customers${query}`, { cache: "no-store", headers: { "Cache-Control": "no-cache" } })
+    adminFetch(`/api/customers${query}`)
       .then((res) => res.json())
       .then((d) => {
         if (d.success) setCustomers(d.customers);
@@ -33,10 +34,9 @@ export default function AdminCustomersPage() {
   const handleSaveCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("/api/customers", {
+      const res = await adminFetch("/api/customers", {
         method: "PUT",
-        cache: "no-store",
-        headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editingCustomer),
       });
       const data = await res.json();

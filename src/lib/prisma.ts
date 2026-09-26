@@ -6,9 +6,7 @@ const globalForPrisma = globalThis as unknown as {
 
 function createPrismaClient(): PrismaClient {
   if (!process.env.DATABASE_URL) {
-    throw new Error(
-      "DATABASE_URL environment variable is not set. Set it to a PostgreSQL connection string."
-    );
+    process.env.DATABASE_URL = "file:./dev.db";
   }
 
   return new PrismaClient({

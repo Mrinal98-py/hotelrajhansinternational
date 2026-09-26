@@ -44,7 +44,7 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
-    const session = await getSession();
+    const session = await getSession(request);
     if (!session || session.role !== "SUPER_ADMIN") {
       return NextResponse.json({ error: "Forbidden: Super Admin only" }, { status: 403 });
     }

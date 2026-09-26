@@ -66,6 +66,14 @@ export default function Home() {
     executive: { single: 3090, double: 3790 },
     deluxe: { single: 3790, double: 4490 },
     royal: { single: 5190, double: 5190 },
+    dormitory: { single: 800, double: 800 },
+  });
+
+  const [roomStatuses, setRoomStatuses] = useState<Record<string, string>>({
+    executive: "AVAILABLE",
+    deluxe: "AVAILABLE",
+    royal: "AVAILABLE",
+    dormitory: "AVAILABLE",
   });
 
   const [cmsSettings, setCmsSettings] = useState<Record<string, string>>({});
@@ -82,11 +90,14 @@ export default function Home() {
         .then((d) => {
           if (d.success && d.rooms) {
             const rates: Record<string, { single: number; double: number }> = {};
+            const statuses: Record<string, string> = {};
             d.rooms.forEach((r: any) => {
               const key = r.type.toLowerCase().replace("royal_suite", "royal");
               rates[key] = { single: r.basePriceSingle, double: r.basePriceDouble };
+              statuses[key] = r.status;
             });
             setRoomRates((prev) => ({ ...prev, ...rates }));
+            setRoomStatuses((prev) => ({ ...prev, ...statuses }));
           }
         })
         .catch(console.error);

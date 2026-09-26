@@ -8,7 +8,7 @@ export const revalidate = 0;
 
 export async function GET(request: Request) {
   try {
-    const session = await getSession();
+    const session = await getSession(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -99,6 +99,27 @@ export async function POST(request: Request) {
 
     if (!room) {
       return NextResponse.json({ error: "Selected room is currently unavailable." }, { status: 400 });
+    }
+
+    if (room.status === "DEACTIVATED") {
+      return NextResponse.json(
+        { error: "Selected room category is deactivated and not available for booking." },
+        { status: 400 }
+      );
+    }
+
+    if (room.status === "OCCUPIED") {
+      return NextResponse.json(
+        { error: "Selected room is currently occupied. Please choose an available room or contact reception." },
+        { status: 400 }
+      );
+    }
+
+    if (room.status === "MAINTENANCE") {
+      return NextResponse.json(
+        { error: "Selected room is currently undergoing maintenance and unavailable for reservation." },
+        { status: 400 }
+      );
     }
 
     // 2. Check Overlapping Bookings & Clean Up Expired Pending Reservations

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { comparePassword, createToken, setSessionCookie } from "@/lib/auth";
+import { comparePassword, createToken, setSessionCookie, isSecureCookie } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -76,7 +76,7 @@ export async function POST(request: Request) {
     });
 
     try {
-      await setSessionCookie(token);
+      await setSessionCookie(token, request);
     } catch (cookieErr) {
       console.warn("Setting session cookie error:", cookieErr);
     }
@@ -99,7 +99,7 @@ export async function POST(request: Request) {
       console.warn("Audit log creation skipped:", auditErr);
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       user: {
         id: user.id,
@@ -107,7 +107,18 @@ export async function POST(request: Request) {
         name: user.name,
         role: user.role,
       },
+      token,
     });
+
+    response.cookies.set("rajhans_admin_token", token, {
+      httpOnly: true,
+      secure: isSecureCookie(request),
+      sameSite: "lax",
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60,
+    });
+
+    return response;
   } catch (error: any) {
     console.error("Login API Error:", error);
     return NextResponse.json(

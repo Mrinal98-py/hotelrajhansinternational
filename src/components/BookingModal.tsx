@@ -8,9 +8,15 @@ interface BookingModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedRoomDefault?: string;
+  roomStatuses?: Record<string, string>;
 }
 
-export default function BookingModal({ isOpen, onClose, selectedRoomDefault = "executive" }: BookingModalProps) {
+export default function BookingModal({
+  isOpen,
+  onClose,
+  selectedRoomDefault = "executive",
+  roomStatuses,
+}: BookingModalProps) {
   const [formData, setFormData] = useState({
     checkIn: "",
     checkOut: "",
@@ -29,19 +35,29 @@ export default function BookingModal({ isOpen, onClose, selectedRoomDefault = "e
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    if (isOpen && selectedRoomDefault) {
-      let normalized = selectedRoomDefault.toLowerCase();
+    if (isOpen) {
+      let normalized = (selectedRoomDefault || "executive").toLowerCase();
       if (normalized.includes("executive")) normalized = "executive";
       else if (normalized.includes("deluxe")) normalized = "deluxe";
       else if (normalized.includes("royal") || normalized.includes("suite")) normalized = "royal";
       else if (normalized.includes("dormitory") || normalized.includes("group")) normalized = "dormitory";
+
+      // If requested room is not available, default to the first available category
+      if (roomStatuses && roomStatuses[normalized] !== "AVAILABLE") {
+        const availableAlt = ["executive", "deluxe", "royal", "dormitory"].find(
+          (k) => roomStatuses[k] === "AVAILABLE"
+        );
+        if (availableAlt) {
+          normalized = availableAlt;
+        }
+      }
 
       setFormData((prev) => ({
         ...prev,
         roomType: normalized,
       }));
     }
-  }, [isOpen, selectedRoomDefault]);
+  }, [isOpen, selectedRoomDefault, roomStatuses]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -67,6 +83,14 @@ export default function BookingModal({ isOpen, onClose, selectedRoomDefault = "e
     e.preventDefault();
     setIsSubmitting(true);
     setErrorMessage("");
+
+    if (roomStatuses && roomStatuses[formData.roomType] && roomStatuses[formData.roomType] !== "AVAILABLE") {
+      setErrorMessage(
+        `The selected room is currently ${roomStatuses[formData.roomType]?.toLowerCase()}. Please pick an available room.`
+      );
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       // 1. Availability check & create booking (PENDING)
@@ -241,11 +265,49 @@ export default function BookingModal({ isOpen, onClose, selectedRoomDefault = "e
                         onChange={handleChange}
                         className="w-full bg-paper border border-gold-400/20 rounded-lg py-2.5 px-3 text-gold-100 focus:outline-none focus:border-gold-400/50 transition-colors text-sm"
                       >
-                        <option value="executive">Executive Room (₹3,090 - ₹3,790)</option>
-                        <option value="deluxe">Deluxe Room (₹3,790 - ₹4,490)</option>
-                        <option value="royal">Royal Suite (₹5,190)</option>
-                        <option value="dormitory">Dormitory (Group stay)</option>
+                        {(!roomStatuses || roomStatuses.executive !== "DEACTIVATED") && (
+                          <option
+                            value="executive"
+                            disabled={Boolean(roomStatuses && roomStatuses.executive !== "AVAILABLE")}
+                          >
+                            Executive Room {roomStatuses?.executive === "OCCUPIED" ? "— [Occupied]" : roomStatuses?.executive === "MAINTENANCE" ? "— [Under Maintenance]" : "(₹3,090 - ₹3,790)"}
+                          </option>
+                        )}
+                        {(!roomStatuses || roomStatuses.deluxe !== "DEACTIVATED") && (
+                          <option
+                            value="deluxe"
+                            disabled={Boolean(roomStatuses && roomStatuses.deluxe !== "AVAILABLE")}
+                          >
+                            Deluxe Room {roomStatuses?.deluxe === "OCCUPIED" ? "— [Occupied]" : roomStatuses?.deluxe === "MAINTENANCE" ? "— [Under Maintenance]" : "(₹3,790 - ₹4,490)"}
+                          </option>
+                        )}
+                        {(!roomStatuses || roomStatuses.royal !== "DEACTIVATED") && (
+                          <option
+                            value="royal"
+                            disabled={Boolean(roomStatuses && roomStatuses.royal !== "AVAILABLE")}
+                          >
+                            Royal Suite {roomStatuses?.royal === "OCCUPIED" ? "— [Occupied]" : roomStatuses?.royal === "MAINTENANCE" ? "— [Under Maintenance]" : "(₹5,190)"}
+                          </option>
+                        )}
+                        {(!roomStatuses || roomStatuses.dormitory !== "DEACTIVATED") && (
+                          <option
+                            value="dormitory"
+                            disabled={Boolean(roomStatuses && roomStatuses.dormitory !== "AVAILABLE")}
+                          >
+                            Dormitory {roomStatuses?.dormitory === "OCCUPIED" ? "— [Occupied]" : roomStatuses?.dormitory === "MAINTENANCE" ? "— [Under Maintenance]" : "(Group stay)"}
+                          </option>
+                        )}
                       </select>
+                      {roomStatuses && roomStatuses[formData.roomType] === "OCCUPIED" && (
+                        <p className="mt-1 text-[11px] text-rose-300 font-medium">
+                          ⚠️ This room is currently occupied. Please pick an alternative available room.
+                        </p>
+                      )}
+                      {roomStatuses && roomStatuses[formData.roomType] === "MAINTENANCE" && (
+                        <p className="mt-1 text-[11px] text-amber-300 font-medium">
+                          ⚠️ This room is currently undergoing maintenance.
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-xs font-medium uppercase tracking-widest text-gold-200/80 mb-1.5 flex items-center gap-1.5">

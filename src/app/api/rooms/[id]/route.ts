@@ -42,7 +42,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSession();
+    const session = await getSession(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -85,8 +85,8 @@ export async function PUT(
         capacity: capacity ? parseInt(capacity) : undefined,
         basePriceSingle: basePriceSingle !== undefined ? parseFloat(basePriceSingle) : undefined,
         basePriceDouble: basePriceDouble !== undefined ? parseFloat(basePriceDouble) : undefined,
-        weekendPrice: weekendPrice ? parseFloat(weekendPrice) : null,
-        holidayPrice: holidayPrice ? parseFloat(holidayPrice) : null,
+        weekendPrice: weekendPrice !== undefined ? (weekendPrice ? parseFloat(weekendPrice) : null) : undefined,
+        holidayPrice: holidayPrice !== undefined ? (holidayPrice ? parseFloat(holidayPrice) : null) : undefined,
         extraBedPrice: extraBedPrice !== undefined ? parseFloat(extraBedPrice) : undefined,
         taxPercentage: taxPercentage !== undefined ? parseFloat(taxPercentage) : undefined,
         status,
@@ -146,7 +146,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSession();
+    const session = await getSession(request);
     if (!session || (session.role !== "SUPER_ADMIN" && session.role !== "MANAGER")) {
       return NextResponse.json({ error: "Forbidden: Higher privileges required" }, { status: 403 });
     }

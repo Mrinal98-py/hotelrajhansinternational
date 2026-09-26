@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
+import { adminFetch } from "@/lib/admin-fetch";
 
 export default function AdminMessagesPage() {
   const [messages, setMessages] = useState<any[]>([]);
@@ -9,7 +10,7 @@ export default function AdminMessagesPage() {
 
   const fetchMessages = () => {
     setLoading(true);
-    fetch("/api/contact")
+    adminFetch("/api/contact")
       .then((res) => res.json())
       .then((d) => {
         if (d.success) setMessages(d.messages);
@@ -24,7 +25,7 @@ export default function AdminMessagesPage() {
 
   const updateStatus = async (id: string, newStatus: string) => {
     try {
-      const res = await fetch("/api/contact", {
+      const res = await adminFetch("/api/contact", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, status: newStatus }),

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
+import { adminFetch } from "@/lib/admin-fetch";
 
 export default function AdminPaymentsPage() {
   const [payments, setPayments] = useState<any[]>([]);
@@ -9,7 +10,7 @@ export default function AdminPaymentsPage() {
 
   const fetchPayments = () => {
     setLoading(true);
-    fetch("/api/payments")
+    adminFetch("/api/payments")
       .then((res) => res.json())
       .then((d) => {
         if (d.success && d.payments) {
@@ -61,7 +62,7 @@ export default function AdminPaymentsPage() {
               if (confirm("Are you sure you want to clear all test payment logs and reset financial metrics to zero?")) {
                 setLoading(true);
                 try {
-                  const res = await fetch("/api/payments/reset", { method: "POST" });
+                  const res = await adminFetch("/api/payments/reset", { method: "POST" });
                   const data = await res.json();
                   if (data.success) {
                     alert("Payment values reset successfully!");

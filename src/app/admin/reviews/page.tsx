@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Star, RefreshCw } from "lucide-react";
+import { adminFetch } from "@/lib/admin-fetch";
 
 export default function AdminReviewsPage() {
   const [reviews, setReviews] = useState<any[]>([]);
@@ -9,7 +10,7 @@ export default function AdminReviewsPage() {
 
   const fetchReviews = () => {
     setLoading(true);
-    fetch("/api/reviews")
+    adminFetch("/api/reviews")
       .then((res) => res.json())
       .then((d) => {
         if (d.success) setReviews(d.reviews);
@@ -24,7 +25,7 @@ export default function AdminReviewsPage() {
 
   const updateReviewStatus = async (id: string, newStatus: string) => {
     try {
-      const res = await fetch("/api/reviews", {
+      const res = await adminFetch("/api/reviews", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, status: newStatus }),

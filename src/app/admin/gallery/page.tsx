@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Plus, Trash2, RefreshCw, X } from "lucide-react";
+import { adminFetch } from "@/lib/admin-fetch";
 
 export default function AdminGalleryPage() {
   const [images, setImages] = useState<any[]>([]);
@@ -21,7 +22,7 @@ export default function AdminGalleryPage() {
   const fetchGallery = () => {
     setLoading(true);
     const query = activeCategory !== "all" ? `?category=${activeCategory}` : "";
-    fetch(`/api/gallery${query}`)
+    adminFetch(`/api/gallery${query}`)
       .then((res) => res.json())
       .then((d) => {
         if (d.success) setImages(d.images);
@@ -37,7 +38,7 @@ export default function AdminGalleryPage() {
   const handleAddImage = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("/api/gallery", {
+      const res = await adminFetch("/api/gallery", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -57,7 +58,7 @@ export default function AdminGalleryPage() {
   const handleDeleteImage = async (id: string) => {
     if (!confirm("Are you sure you want to delete this photo?")) return;
     try {
-      const res = await fetch(`/api/gallery?id=${id}`, { method: "DELETE" });
+      const res = await adminFetch(`/api/gallery?id=${id}`, { method: "DELETE" });
       if (res.ok) fetchGallery();
     } catch (err) {
       console.error("Delete photo error:", err);

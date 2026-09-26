@@ -8,6 +8,8 @@ import {
   X
 } from "lucide-react";
 
+import { adminFetch } from "@/lib/admin-fetch";
+
 export default function AdminRoomsPage() {
   const [rooms, setRooms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -17,7 +19,7 @@ export default function AdminRoomsPage() {
 
   const fetchRooms = () => {
     setLoading(true);
-    fetch("/api/rooms", { cache: "no-store", headers: { "Cache-Control": "no-cache" } })
+    adminFetch("/api/rooms")
       .then((res) => res.json())
       .then((d) => {
         if (d.success) setRooms(d.rooms);
@@ -44,10 +46,9 @@ export default function AdminRoomsPage() {
           : [],
       };
 
-      const res = await fetch(`/api/rooms/${editingRoom.id}`, {
+      const res = await adminFetch(`/api/rooms/${editingRoom.id}`, {
         method: "PUT",
-        cache: "no-store",
-        headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
@@ -72,10 +73,9 @@ export default function AdminRoomsPage() {
 
   const toggleStatus = async (room: any, newStatus: string) => {
     try {
-      const res = await fetch(`/api/rooms/${room.id}`, {
+      const res = await adminFetch(`/api/rooms/${room.id}`, {
         method: "PUT",
-        cache: "no-store",
-        headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
       if (res.ok) fetchRooms();
@@ -131,7 +131,9 @@ export default function AdminRoomsPage() {
                         ? "bg-emerald-100 text-emerald-900 border border-emerald-300"
                         : room.status === "MAINTENANCE"
                         ? "bg-amber-100 text-amber-900 border border-amber-300"
-                        : "bg-rose-100 text-rose-900 border border-rose-300"
+                        : room.status === "OCCUPIED"
+                        ? "bg-rose-100 text-rose-900 border border-rose-300"
+                        : "bg-slate-200 text-slate-800 border border-slate-400"
                     }`}
                   >
                     {room.status}
@@ -174,16 +176,27 @@ export default function AdminRoomsPage() {
 
               {/* Action Buttons */}
               <div className="pt-4 border-t border-slate-200 flex flex-wrap gap-3 items-center justify-between">
-                <button
-                  onClick={() => toggleStatus(room, room.status === "AVAILABLE" ? "MAINTENANCE" : "AVAILABLE")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer border ${
-                    room.status === "AVAILABLE"
-                      ? "border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100"
-                      : "border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100"
-                  }`}
-                >
-                  {room.status === "AVAILABLE" ? "Set Maintenance" : "Set Available"}
-                </button>
+                <div className="flex items-center gap-2">
+                  <label className="text-[10px] uppercase font-bold text-slate-700">Status:</label>
+                  <select
+                    value={room.status}
+                    onChange={(e) => toggleStatus(room, e.target.value)}
+                    className={`py-1.5 px-3 rounded-xl text-xs font-extrabold border cursor-pointer transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400 ${
+                      room.status === "AVAILABLE"
+                        ? "bg-emerald-50 text-emerald-900 border-emerald-300 hover:bg-emerald-100"
+                        : room.status === "OCCUPIED"
+                        ? "bg-rose-50 text-rose-900 border-rose-300 hover:bg-rose-100"
+                        : room.status === "MAINTENANCE"
+                        ? "bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100"
+                        : "bg-slate-100 text-slate-800 border-slate-300 hover:bg-slate-200"
+                    }`}
+                  >
+                    <option value="AVAILABLE">🟢 AVAILABLE</option>
+                    <option value="OCCUPIED">🔴 OCCUPIED</option>
+                    <option value="MAINTENANCE">🟡 MAINTENANCE</option>
+                    <option value="DEACTIVATED">⚪ DEACTIVATED</option>
+                  </select>
+                </div>
 
                 <button
                   onClick={() => setEditingRoom({ ...room })}

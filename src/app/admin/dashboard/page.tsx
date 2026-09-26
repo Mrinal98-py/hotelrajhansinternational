@@ -23,13 +23,15 @@ import {
   CartesianGrid,
 } from "recharts";
 
+import { adminFetch } from "@/lib/admin-fetch";
+
 export default function AdminDashboardPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchDashboardData = () => {
     setLoading(true);
-    fetch("/api/reports", { cache: "no-store", headers: { "Cache-Control": "no-cache" } })
+    adminFetch("/api/reports")
       .then((res) => res.json())
       .then((d) => {
         if (d.success) {

@@ -21,6 +21,8 @@ import {
   Hotel,
 } from "lucide-react";
 
+import { adminFetch } from "@/lib/admin-fetch";
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -30,7 +32,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     if (pathname === "/admin/login") return;
 
-    fetch("/api/auth/me")
+    adminFetch("/api/auth/me")
       .then((res) => res.json())
       .then((data) => {
         if (data.authenticated) {
@@ -47,7 +49,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
+    try {
+      sessionStorage.removeItem("rajhans_admin_token");
+    } catch {}
+    await adminFetch("/api/auth/logout", { method: "POST" });
     router.push("/admin/login");
     router.refresh();
   };

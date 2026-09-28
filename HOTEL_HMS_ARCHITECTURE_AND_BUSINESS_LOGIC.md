@@ -1,7 +1,7 @@
 # Hotel Rajhans International — HMS Master Architecture & Business Logic Documentation
 
 > **System Name:** Hotel Rajhans International Hospitality Management System (HMS)  
-> **Platform Version:** 0.1.1  
+> **Platform Version:** 0.2.0 (Enterprise Tape Chart & Dynamic Folio Edition)  
 > **Target Framework:** Next.js 16 (App Router + Turbopack) & React 19  
 > **Database:** PostgreSQL (Neon Serverless) via Prisma ORM v6.4.0  
 > **Primary Payment Gateway:** Cashfree PG (Live Production)  
@@ -14,50 +14,72 @@
 1. [Executive Summary & System Overview](#1-executive-summary--system-overview)
 2. [Complete Project Directory Structure](#2-complete-project-directory-structure)
 3. [Database Architecture & Entity Relationships](#3-database-architecture--entity-relationships)
+   - [3.1 Physical Room Inventory Hierarchy](#31-physical-room-inventory-hierarchy)
+   - [3.2 Entity Relationship Diagram](#32-entity-relationship-diagram)
+   - [3.3 Enumerations Reference](#33-enumerations-reference)
 4. [Complete Business Logic & Core Engines](#4-complete-business-logic--core-engines)
    - [4.1 Room Tariff & Pricing Calculation Engine](#41-room-tariff--pricing-calculation-engine)
-   - [4.2 Room Availability & Inventory Locking Engine](#42-room-availability--inventory-locking-engine)
-   - [4.3 Booking Lifecycle & State Transitions](#43-booking-lifecycle--state-transitions)
-   - [4.4 Cashfree Payment Gateway Integration Engine](#44-cashfree-payment-gateway-integration-engine)
-   - [4.5 Post-Payment Settlement & Dispatch Flow](#45-post-payment-settlement--dispatch-flow)
-   - [4.6 Transactional Email & Tax Invoice Engine](#46-transactional-email--tax-invoice-engine)
-   - [4.7 Google Sheets Bi-Directional Synchronization](#47-google-sheets-bi-directional-synchronization)
-   - [4.8 Location & Distance Approximation Engine](#48-location--distance-approximation-engine)
-   - [4.9 Authentication & Role-Based Access Control (RBAC)](#49-authentication--role-based-access-control-rbac)
-   - [4.10 CMS, Review Moderation & Audit Logging](#410-cms-review-moderation--audit-logging)
+   - [4.2 Concurrency-Safe Sequence Reference Generator](#42-concurrency-safe-sequence-reference-generator)
+   - [4.3 Physical Room Inventory Calendar & Tape Chart Engine](#43-physical-room-inventory-calendar--tape-chart-engine)
+   - [4.4 Concurrency Double-Booking Protection & Atomic Room Allocation](#44-concurrency-double-booking-protection--atomic-room-allocation)
+   - [4.5 Reservation Lifecycle & Finite State Machine (FSM)](#45-reservation-lifecycle--finite-state-machine-fsm)
+   - [4.6 Cashfree Payment Gateway & Unified Confirmation Pipeline](#46-cashfree-payment-gateway--unified-confirmation-pipeline)
+   - [4.7 Dynamic Billing Folio Ledger & Split Payments](#47-dynamic-billing-folio-ledger--split-payments)
+   - [4.8 Front Desk Operations & Walk-in Bookings](#48-front-desk-operations--walk-in-bookings)
+   - [4.9 Housekeeping & Maintenance Workflows](#49-housekeeping--maintenance-workflows)
+   - [4.10 Transactional Email & Tax Invoice Engine](#410-transactional-email--tax-invoice-engine)
+   - [4.11 Google Sheets Bi-Directional Synchronization](#411-google-sheets-bi-directional-synchronization)
+   - [4.12 Location & Distance Engine](#412-location--distance-engine)
+   - [4.13 Security, RBAC & Outbox Pattern Event Dispatching](#413-security-rbac--outbox-pattern-event-dispatching)
 5. [Complete API Endpoints Catalog](#5-complete-api-endpoints-catalog)
 6. [Frontend Architecture & Page Routes](#6-frontend-architecture--page-routes)
-7. [Environment Variables Matrix](#7-environment-variables-matrix)
-8. [Production Deployment & Operational Best Practices](#8-production-deployment--operational-best-practices)
+7. [Automated Testing Suite (8 Suites)](#7-automated-testing-suite-8-suites)
+8. [Environment Variables Matrix](#8-environment-variables-matrix)
+9. [Production Deployment & Operational Best Practices](#9-production-deployment--operational-best-practices)
 
 ---
 
 ## 1. Executive Summary & System Overview
 
-Hotel Rajhans International HMS is an enterprise-grade full-stack hotel management and guest booking platform developed for Hotel Rajhans International (a unit of Takshshila Regency Pvt. Ltd., Kachari Chowk, MG Road, Bhagalpur, Bihar – 812001).
+Hotel Rajhans International HMS is an enterprise-grade full-stack hotel management and guest booking platform developed for **Hotel Rajhans International** (a unit of Takshshila Regency Pvt. Ltd., Kachari Chowk, MG Road, Bhagalpur, Bihar – 812001).
+
+The architecture couples a high-converting public storefront with a multi-departmental hotel management back-office featuring:
+- **Physical Room Tape Chart Calendar**: 33 physical rooms across 3 categories with Month/Year/Date navigation, drag-and-drop room blocks, and live occupancy rates.
+- **Atomic Concurrency Protection**: High-throughput row-level locking (`SELECT ... FOR UPDATE`) preventing double-bookings.
+- **Dynamic Folio Ledger**: Itemized charges (room, restaurant/F&B, laundry, damage), partial/split payments, and automated zero-balance settlement.
+- **Unified Payment Engine**: Resilient Cashfree integration with signature verification, webhook processing, audit logging, outbox queueing, and guest/admin alerts.
+- **Departmental Modules**: Front Desk walk-in, Housekeeping task assignments, Maintenance work orders, Cashier shift closures, and CRM analytics.
 
 ### Architecture Diagram
 
 ```mermaid
 graph TD
     Client[Guest Web Browser / Mobile User] -->|Browses Rooms, Reviews, FAQs| PublicFront[Next.js Public App /]
-    Admin[Hotel Management / Receptionist] -->|Authenticates via JWT| AdminPanel[Admin Portal /admin/*]
+    Admin[Staff / Receptionist / Manager] -->|Authenticates via JWT| AdminPanel[Admin Portal /admin/*]
     
-    PublicFront -->|POST /api/bookings| BookingEngine[Booking & Inventory Engine]
+    PublicFront -->|POST /api/bookings| BookingEngine[Booking & Sequence Engine]
     PublicFront -->|POST /api/payments/cashfree/*| CashfreeEngine[Cashfree PG Integration]
     
-    AdminPanel -->|adminFetch with Auth Header| AdminAPIs[Protected Management APIs]
+    AdminPanel -->|Tape Chart / Room Plan| TapeChart[/admin/room-inventory]
+    AdminPanel -->|Front Desk / Walk-in| FrontDesk[/admin/front-desk]
+    AdminPanel -->|Dynamic Folio Ledger| FolioEngine[/admin/folios]
+    AdminPanel -->|Cashier Shifts| Cashier[/admin/cashier]
+    AdminPanel -->|Housekeeping & Maintenance| Ops[/admin/housekeeping & maintenance]
+    
+    CashfreeEngine -->|Verification / Webhook| UnifiedPayment[confirmBookingPayment Engine]
+    
+    UnifiedPayment -->|Atomic Room Allocation| InvEngine[Physical Room Allocation Engine]
+    UnifiedPayment -->|Auto-Post Payment Item| FolioEngine
+    UnifiedPayment -->|Audit Record| AuditTrail[(AuditLog Table)]
+    UnifiedPayment -->|Transactional Event| Outbox[(OutboxEvent Table)]
     
     BookingEngine -->|Read / Write| Prisma[Prisma ORM Client]
-    AdminAPIs -->|Read / Write| Prisma
+    UnifiedPayment -->|Read / Write| Prisma
     
     Prisma -->|Pooled PostgreSQL Connection| NeonDB[(Neon Serverless PostgreSQL)]
     
-    CashfreeEngine -->|Order Creation & Verification| CashfreeAPI[(Cashfree Live PG Servers)]
-    CashfreeEngine -->|Webhook HMAC-SHA256| WebhookHandler[/api/payments/cashfree/webhook]
-    
-    CashfreeEngine -->|Verified Payment| Mailer[Nodemailer SMTP Dispatch]
-    CashfreeEngine -->|Verified Payment| Sheets[Google Sheets Integration]
+    UnifiedPayment -.->|Async Non-Blocking| Mailer[Nodemailer SMTP Dispatch]
+    UnifiedPayment -.->|Async Non-Blocking| Sheets[Google Sheets Integration]
     
     Mailer -->|HTML Confirmation & Invoice| GuestInbox[Guest Email]
     Mailer -->|Instant Order Alert| HotelAdminInbox[info@hotelrajhansinternational.com]
@@ -74,8 +96,8 @@ hotelrajhansinternational/
 │   └── workflows/
 │       └── ci.yml                 # CI validation pipeline (Next.js build & Prisma check)
 ├── prisma/
-│   ├── schema.prisma              # Master PostgreSQL schema definitions
-│   └── dev.db                     # Local fallback database (historical)
+│   ├── schema.prisma              # Master PostgreSQL schema definitions (Neon)
+│   └── dev.db                     # Historical fallback SQLite DB
 ├── public/
 │   ├── images/                    # High-res photography of rooms, suite, restaurant
 │   │   ├── executive/
@@ -90,42 +112,75 @@ hotelrajhansinternational/
 │   │   ├── page.tsx               # Public guest landing page (rooms, rates, FAQs, reviews)
 │   │   ├── globals.css            # Custom luxury gold/cream theme tokens & Tailwind v4
 │   │   ├── attraction/
-│   │   │   └── page.tsx           # Tourist spots around Bhagalpur (Vikramshila, Mandar)
+│   │   │   └── page.tsx           # Regional Bhagalpur attractions guide (Vikramshila, Mandar)
 │   │   ├── gallery/
-│   │   │   └── page.tsx           # Filterable media gallery
+│   │   │   └── page.tsx           # Categorized media gallery
 │   │   ├── admin/
-│   │   │   ├── layout.tsx         # Unified admin layout with navigation sidebar & RBAC guard
-│   │   │   ├── login/page.tsx     # Super Admin / Staff credentials login form
-│   │   │   ├── dashboard/page.tsx # Financial KPI metrics, occupancy charts, quick actions
-│   │   │   ├── bookings/page.tsx  # Reservations table, check-in/out, filtering, invoice
-│   │   │   ├── rooms/page.tsx     # Dynamic room rate editor, status toggle, amenities
-│   │   │   ├── customers/page.tsx # CRM database: guest profiles, lifetime spends, visit count
-│   │   │   ├── payments/page.tsx  # Cashfree audit trail, order IDs, manual payment reset
-│   │   │   ├── reports/page.tsx   # Revenue reports, occupancy percentage, export to CSV
-│   │   │   ├── cms/page.tsx       # Live content editor: address, contact emails, phone numbers
+│   │   │   ├── layout.tsx         # Admin sidebar with RBAC filtering & responsive navigation
+│   │   │   ├── login/page.tsx     # Staff credentials login form
+│   │   │   ├── dashboard/page.tsx # Financial KPI metrics, occupancy charts, movements
+│   │   │   ├── front-desk/page.tsx# Front Desk walk-in booking & express check-in/out
+│   │   │   ├── room-inventory/page.tsx # Physical Room Tape Chart Calendar (Month/Year picker)
+│   │   │   ├── inventory/page.tsx # Deprecated legacy grid redirecting to room-inventory
+│   │   │   ├── bookings/page.tsx  # Reservations ledger, filters, invoice links
+│   │   │   ├── folios/page.tsx    # Dynamic billing folios, itemized charges & split payments
+│   │   │   ├── cashier/page.tsx   # Cashier shift opening, closing, cash-in/out reconciliation
+│   │   │   ├── housekeeping/page.tsx # Room cleaning statuses (Clean/Dirty/Inspected) & staff tasks
+│   │   │   ├── maintenance/page.tsx # Out-of-order logs, repair work orders & ticket statuses
+│   │   │   ├── pos/page.tsx       # Restaurant & room service billing direct to room folio
+│   │   │   ├── rooms/page.tsx     # Room categories, base tariffs, amenities & photo manager
+│   │   │   ├── customers/page.tsx # Guest CRM: visit count, lifetime spends, VIP status
+│   │   │   ├── payments/page.tsx  # Cashfree audit ledger & payment resets
+│   │   │   ├── promotions/page.tsx# Discount coupon codes & promo campaigns
+│   │   │   ├── reports/page.tsx   # Financial KPIs, ADR, RevPAR, CSV exports
+│   │   │   ├── audit/page.tsx     # Immutable system-wide audit log trail
+│   │   │   ├── staff/page.tsx     # Employee roster, department roles & permissions
+│   │   │   ├── cms/page.tsx       # Live content editor: address, contact numbers, policies
 │   │   │   ├── reviews/page.tsx   # Guest review moderation: Approve, Feature, Reject
-│   │   │   ├── messages/page.tsx  # Inquiries and contact submissions inbox
-│   │   │   ├── gallery/page.tsx   # Admin gallery image uploader and organizer
-│   │   │   └── settings/page.tsx  # Hotel policies, GSTIN, check-in/check-out timing
+│   │   │   ├── messages/page.tsx  # Guest inquiries inbox & contact submissions
+│   │   │   ├── gallery/page.tsx   # Media gallery manager
+│   │   │   └── settings/page.tsx  # Hotel policies, GSTIN, check-in/check-out timings
 │   │   └── api/
 │   │       ├── auth/
 │   │       │   ├── login/route.ts  # Issues signed JWT cookie and bearer token
 │   │       │   ├── logout/route.ts # Clears session cookie
 │   │       │   └── me/route.ts     # Validates current active session
+│   │       ├── room-inventory/route.ts # GET Tape Chart matrix, POST/DELETE room blocks
+│   │       ├── rooms/
+│   │       │   ├── route.ts        # GET all rooms with images & POST new room category
+│   │       │   ├── [id]/route.ts   # GET, PUT (rates/amenities), DELETE room
+│   │       │   ├── assign/route.ts # POST atomic physical room assignment to booking
+│   │       │   └── inventory/route.ts # GET physical room inventory state
 │   │       ├── bookings/
-│   │       │   ├── route.ts        # GET (filtered list) & POST (create pending reservation)
-│   │       │   ├── [id]/route.ts   # GET single & PUT (update booking status)
-│   │       │   └── check-availability/route.ts # Real-time date conflict validation
+│   │       │   ├── route.ts        # GET filtered list & POST create pending reservation
+│   │       │   ├── [id]/route.ts   # GET single & PUT update booking status
+│   │       │   ├── [id]/extend/route.ts # POST extend reservation stay dates
+│   │       │   ├── [id]/modify/route.ts # POST modify room type or guest count
+│   │       │   ├── check-availability/route.ts # Real-time date conflict validation
+│   │       │   └── walk-in/route.ts # POST front desk walk-in booking with instant room assignment
+│   │       ├── folios/
+│   │       │   ├── route.ts        # GET all folios & POST create folio line item
+│   │       │   └── [id]/route.ts   # GET folio details & PUT settle/close folio
+│   │       ├── cashier/
+│   │       │   └── shifts/route.ts # GET active shifts, POST open/close/cash-drop shift
+│   │       ├── housekeeping/route.ts # GET/PUT room cleaning status & assign housekeeper
+│   │       ├── maintenance/route.ts  # GET/POST maintenance work order tickets
+│   │       ├── restaurant/route.ts   # GET menu & POST post food order to room folio
+│   │       ├── services/route.ts     # GET hotel services catalog
+│   │       ├── staff/route.ts        # GET/POST/PUT staff directory & roles
+│   │       ├── guests/
+│   │       │   └── [id]/documents/route.ts # GET/POST guest ID proof document uploads
+│   │       ├── promotions/route.ts   # GET/POST promo codes & discount validation
+│   │       ├── refunds/route.ts      # GET/POST process payment refund
+│   │       ├── audit/route.ts        # GET system audit logs with filtering
+│   │       ├── outbox/route.ts       # GET/POST process pending outbox events
 │   │       ├── payments/
 │   │       │   ├── route.ts        # GET payment logs for admin audit trail
-│   │       │   ├── reset/route.ts  # POST clears test payment logs and resets metrics
+│   │       │   ├── reset/route.ts  # POST clears test payment logs & resets metrics
 │   │       │   └── cashfree/
 │   │       │       ├── create-order/route.ts   # Generates Cashfree PG order & session ID
 │   │       │       ├── verify-payment/route.ts # Settles payment, updates DB, sends emails
 │   │       │       └── webhook/route.ts        # Async Cashfree webhook HMAC verification
-│   │       ├── rooms/
-│   │       │   ├── route.ts        # GET all rooms with images/amenities & POST new room
-│   │       │   └── [id]/route.ts   # GET, PUT (rates/status/amenities), DELETE room
 │   │       ├── customers/route.ts  # GET search customers & PUT update profile notes
 │   │       ├── cms/route.ts        # GET public site settings & PUT update CMS key-values
 │   │       ├── contact/route.ts    # POST public inquiry & sync to Google Sheets
@@ -137,7 +192,7 @@ hotelrajhansinternational/
 │   │       └── location/
 │   │           └── distance/route.ts # GET Haversine distance from Bhagalpur Junction
 │   ├── components/
-│   │   ├── BookingModal.tsx        # Guest booking modal with live pricing & Cashfree Web SDK
+│   │   ├── BookingModal.tsx        # Guest booking modal with live pricing & Cashfree SDK
 │   │   ├── LocationSection.tsx     # Interactive map, directions, railway distance
 │   │   ├── AttractionsSection.tsx  # Bhagalpur historical and cultural landmarks
 │   │   └── ImageGallery.tsx        # Lightbox image viewer
@@ -145,17 +200,33 @@ hotelrajhansinternational/
 │   │   ├── prisma.ts               # Singleton PrismaClient with Neon fallback & lambda cache
 │   │   ├── auth.ts                 # JWT signing/verification (`jose`), password hashing (`bcrypt`)
 │   │   ├── admin-fetch.ts          # Resilient fetch wrapper with Bearer token & no-store headers
+│   │   ├── payment-confirm.ts      # Unified payment confirmation pipeline & post-payment notifications
+│   │   ├── inventory.ts            # Physical room calendar matrix, date blocking & atomic allocation
+│   │   ├── folio.ts                # Dynamic folio ledger, split payments, line items & balance calc
+│   │   ├── sequence.ts             # Concurrency-safe atomic reference ID generator (HRJ-YYYYMMDD-XXXX)
+│   │   ├── state-machine.ts        # Booking lifecycle transitions, allowed actions & validation
+│   │   ├── pricing.ts              # Tiered tariff calculations, extra guests & GST rules
 │   │   ├── cashfree.ts             # Cashfree PG API client (orders, verification, webhook HMAC)
 │   │   ├── mailer.ts               # Nodemailer SMTP transporter and email dispatcher
 │   │   ├── invoice.ts              # HTML confirmation email & printable tax invoice templates
 │   │   ├── googlesheets.ts         # Google Sheets API v4 integration via RSA Service Account
 │   │   ├── location.ts             # Geographic coordinates & Haversine distance calculator
-│   │   └── utils.ts                # Date overlap check, night calculation, reference generator
+│   │   └── utils.ts                # Date overlap check, night calculation, helpers
 │   ├── proxy.ts                    # Edge Next.js middleware for admin authentication routing
 │   └── types/
 │       └── json2csv.d.ts           # Type declarations for CSV report export
+├── tests/
+│   ├── pricing.test.ts             # Suite 1: Tariff calculation, guest tiers, GST rules
+│   ├── sequence.test.ts            # Suite 2: 50 concurrent reference generation requests
+│   ├── folio.test.ts               # Suite 3: Folio line items, payments, balance settlement
+│   ├── state-machine.test.ts       # Suite 4: Reservation state transitions & validation rules
+│   ├── security.test.ts            # Suite 5: RBAC permissions, JWT validation, security headers
+│   ├── room-inventory.test.ts      # Suite 6: Physical room tape chart, date blocks & unblocking
+│   ├── payment-confirm.test.ts     # Suite 7: Unified payment pipeline (6 verification gates)
+│   ├── concurrency.test.ts         # Suite 8: 20 simultaneous bookings double-booking stress test
+│   └── run-all-tests.ts            # Master test orchestrator executing all 8 suites
 ├── .env                            # Production secrets (Neon, Cashfree, JWT, SMTP)
-├── package.json                    # Dependencies and scripts (build, prisma generate)
+├── package.json                    # Dependencies and scripts (build, test, prisma generate)
 ├── tsconfig.json                   # TypeScript compiler configuration
 └── next.config.ts                  # Next.js build parameters
 ```
@@ -164,43 +235,50 @@ hotelrajhansinternational/
 
 ## 3. Database Architecture & Entity Relationships
 
-The data layer is powered by Neon Serverless PostgreSQL, managed through Prisma ORM.
+The data layer is hosted on Neon Serverless PostgreSQL and managed via Prisma ORM v6.4.0.
 
-### Entity Relationship Diagram
+### 3.1 Physical Room Inventory Hierarchy
+
+The hotel operates **33 physical rooms** mapped strictly to **3 core room categories**:
+
+| Room Category | RoomType Enum | Total Rooms | Floor Distribution & Room Numbers |
+| :--- | :--- | :--- | :--- |
+| **AC EXECUTIVE** | `EXECUTIVE` | **18** | Floor 1: `101`, `103`, `104`, `105`<br>Floor 2: `201`, `203`, `204`, `205`, `211`, `212`, `214`, `215`, `216`, `217`<br>Floor 3: `301`, `303`, `304`, `305` |
+| **AC DELUXE** | `DELUXE` | **12** | Floor 1: `106`, `107`, `108`, `109`<br>Floor 2: `206`, `207`, `208`, `209`<br>Floor 3: `306`, `307`, `308`, `309` |
+| **ROYAL SUITE** | `ROYAL_SUITE` | **3** | Floor 1: `102`<br>Floor 2: `202`<br>Floor 3: `302` |
+| **TOTAL** | — | **33** | **100% physically inventory-backed** |
+
+### 3.2 Entity Relationship Diagram
 
 ```mermaid
 erDiagram
-    User ||--o{ AuditLog : creates
-    Customer ||--o{ Booking : places
-    Room ||--o{ Booking : reserves
-    Room ||--o{ RoomImage : contains
-    Room ||--o{ RoomAmenity : provides
-    Room ||--o{ Availability : maintains
+    Room ||--o{ PhysicalRoom : contains
+    PhysicalRoom ||--o{ PhysicalRoomAssignment : assigned_to
+    PhysicalRoom ||--o{ RoomBlock : blocked_by
+    PhysicalRoom ||--o{ HousekeepingTask : serviced_by
+    PhysicalRoom ||--o{ MaintenanceTicket : maintained_by
+
+    Customer ||--o{ Booking : books
+    Room ||--o{ Booking : categorizes
+    Booking ||--o{ PhysicalRoomAssignment : allocates
     Booking ||--o{ Payment : receives
+    Booking ||--o{ Folio : bills_through
+    Booking ||--o{ OutboxEvent : emits
 
-    Room {
+    Folio ||--o{ FolioItem : records
+    User ||--o{ CashierShift : operates
+    CashierShift ||--o{ FolioItem : receipts
+    User ||--o{ AuditLog : audits
+
+    PhysicalRoom {
         string id PK
-        string name
-        string slug UK
-        enum type
-        float basePriceSingle
-        float basePriceDouble
-        float weekendPrice
-        float holidayPrice
-        float extraBedPrice
-        float taxPercentage
+        string roomNumber UK
+        int floor
+        string roomId FK
         enum status
-        int displayOrder
-    }
-
-    Customer {
-        string id PK
-        string name
-        string phone UK
-        string email
-        int visitCount
-        float totalSpent
-        boolean vipStatus
+        enum housekeeping
+        enum maintenance
+        boolean isActive
     }
 
     Booking {
@@ -208,6 +286,7 @@ erDiagram
         string referenceId UK
         string customerId FK
         string roomId FK
+        string assignedRoomId FK
         datetime checkIn
         datetime checkOut
         int guestsCount
@@ -216,6 +295,37 @@ erDiagram
         float discountAmount
         float netAmount
         float paidAmount
+        enum status
+    }
+
+    Folio {
+        string id PK
+        string folioNumber UK
+        string bookingId FK
+        float totalCharges
+        float totalPayments
+        float balanceAmount
+        enum status
+    }
+
+    FolioItem {
+        string id PK
+        string folioId FK
+        enum itemType
+        string description
+        float amount
+        float taxAmount
+        string paymentMethod
+        string referenceId
+    }
+
+    RoomBlock {
+        string id PK
+        string physicalRoomId FK
+        datetime startDate
+        datetime endDate
+        enum blockType
+        string reason
         enum status
     }
 
@@ -230,40 +340,32 @@ erDiagram
         enum status
         string gatewayResponse
     }
-
-    Setting {
-        string id PK
-        string key UK
-        string value
-        string category
-    }
-
-    Review {
-        string id PK
-        string authorName
-        string authorInitials
-        int rating
-        string reviewText
-        enum status
-    }
 ```
 
-### Enumerations
-- **`Role`**: `SUPER_ADMIN`, `MANAGER`, `RECEPTION`, `STAFF`
+### 3.3 Enumerations Reference
+
+- **`Role`**: `SUPER_ADMIN`, `MANAGER`, `RECEPTION`, `HOUSEKEEPING`, `MAINTENANCE`, `RESTAURANT`, `STAFF`
 - **`RoomType`**: `EXECUTIVE`, `DELUXE`, `ROYAL_SUITE`, `DORMITORY`
-- **`RoomStatus`**: `AVAILABLE`, `OCCUPIED`, `MAINTENANCE`, `DEACTIVATED`
-- **`BookingStatus`**: `PENDING`, `CONFIRMED`, `CHECKED_IN`, `CHECKED_OUT`, `CANCELLED`, `REFUNDED`
+- **`RoomStatus`**: `AVAILABLE`, `OCCUPIED`, `RESERVED`, `DIRTY`, `CLEANING`, `INSPECTION`, `OUT_OF_ORDER`, `MAINTENANCE`, `DEACTIVATED`, `BLOCKED`
+- **`RoomBlockType`**: `MAINTENANCE`, `VIP_HOLD`, `DEEP_CLEANING`, `RENOVATION`, `OUT_OF_SERVICE`, `MANAGEMENT_BLOCK`
+- **`RoomBlockStatus`**: `ACTIVE`, `RELEASED`, `CANCELLED`
+- **`HousekeepingStatus`**: `CLEAN`, `DIRTY`, `CLEANING`, `INSPECTION`, `READY`, `OUT_OF_ORDER`
+- **`MaintenanceStatus`**: `NONE`, `REPORTED`, `UNDER_REPAIR`, `OUT_OF_ORDER`
+- **`BookingStatus`**: `PENDING`, `CONFIRMED`, `CHECKED_IN`, `CHECKED_OUT`, `CANCELLED`, `NO_SHOW`, `REFUNDED`
+- **`AssignmentStatus`**: `ASSIGNED`, `ACTIVE`, `COMPLETED`, `CANCELLED`, `TRANSFERRED`
 - **`PaymentStatus`**: `PENDING`, `SUCCESS`, `FAILED`, `REFUNDED`
 - **`PaymentMethod`**: `UPI`, `CARD`, `NETBANKING`, `WALLET`, `CASH`
-- **`ReviewStatus`**: `PENDING`, `APPROVED`, `REJECTED`, `FEATURED`
-- **`MessageStatus`**: `UNREAD`, `READ`, `REPLIED`, `RESOLVED`
+- **`FolioStatus`**: `OPEN`, `CLOSED`, `SETTLED`, `VOID`
+- **`FolioItemType`**: `ROOM_CHARGE`, `RESTAURANT`, `ROOM_SERVICE`, `LAUNDRY`, `MINIBAR`, `EXTRA_BED`, `SERVICE`, `TAX`, `DISCOUNT`, `ADJUSTMENT`, `PAYMENT`, `REFUND`
+- **`ShiftStatus`**: `OPEN`, `CLOSED`, `RECONCILED`
+- **`CashTxType`**: `CASH_IN`, `CASH_OUT`, `PAYMENT_RECEIVED`, `REFUND_PAID`, `EXPENSE`, `DROP`
 
 ---
 
 ## 4. Complete Business Logic & Core Engines
 
 ### 4.1 Room Tariff & Pricing Calculation Engine
-File: [src/app/api/bookings/route.ts](file:///Users/mrinal/Documents/hotelrajhansinternational/src/app/api/bookings/route.ts) & [src/lib/utils.ts](file:///Users/mrinal/Documents/hotelrajhansinternational/src/lib/utils.ts)
+File: [src/lib/pricing.ts](file:///Users/mrinal/Documents/hotelrajhansinternational/src/lib/pricing.ts)
 
 1. **Duration Calculation**:
    $$\text{Nights} = \max\left(1, \left\lceil \frac{|\text{checkOut} - \text{checkIn}|}{1000 \times 60 \times 60 \times 24} \right\rceil\right)$$
@@ -271,136 +373,181 @@ File: [src/app/api/bookings/route.ts](file:///Users/mrinal/Documents/hotelrajhan
 2. **Occupancy Tier Rate**:
    $$\text{Rate Per Night} = \begin{cases} \text{room.basePriceDouble}, & \text{if guests} > 1 \\ \text{room.basePriceSingle}, & \text{if guests} \le 1 \end{cases}$$
 
-3. **Tax & Net Amount Formula**:
+3. **Tax & Net Formula**:
    $$\text{Subtotal} = \text{Rate Per Night} \times \text{Nights}$$
    $$\text{Tax Amount (GST)} = \frac{\text{Subtotal} \times \text{room.taxPercentage}}{100}$$
    $$\text{Net Payable Amount} = \text{Subtotal} + \text{Tax Amount} - \text{Discount Amount}$$
 
 ---
 
-### 4.2 Room Availability & Inventory Locking Engine
-File: [src/app/api/bookings/route.ts](file:///Users/mrinal/Documents/hotelrajhansinternational/src/app/api/bookings/route.ts) & [src/lib/utils.ts](file:///Users/mrinal/Documents/hotelrajhansinternational/src/lib/utils.ts)
+### 4.2 Concurrency-Safe Sequence Reference Generator
+File: [src/lib/sequence.ts](file:///Users/mrinal/Documents/hotelrajhansinternational/src/lib/sequence.ts)
 
-1. **Status Guards**:
-   - `DEACTIVATED`: Booking rejected immediately (`400 Bad Request`).
-   - `OCCUPIED`: Booking rejected (`400 Bad Request`).
-   - `MAINTENANCE`: Booking rejected (`400 Bad Request`).
-
-2. **Auto-Cleanup of Abandoned Sessions**:
-   - Before querying existing reservations, any booking in `PENDING` state older than 30 minutes is automatically set to `CANCELLED`:
-     $$\text{createdAt} < (\text{Now} - 30\text{ minutes}) \implies \text{status} = \text{"CANCELLED"}$$
-
-3. **Date Overlap Detection**:
-   $$\text{isDateOverlap}(A_1, A_2, B_1, B_2) = (A_1 < B_2) \land (A_2 > B_1)$$
-   If any active booking (`CONFIRMED` or `CHECKED_IN`) overlaps with the requested range, the request is rejected with `409 Conflict`.
-
-4. **Session Resumption**:
-   - If the same customer phone number has an active `PENDING` reservation for the room, the existing booking session is returned, allowing the guest to complete payment without duplicate entry errors.
+Generates references in the format `HRJ-YYYYMMDD-XXXX` (e.g. `HRJ-20260929-0416`).
+- Uses atomic sequence increments via PostgreSQL transactions (`SELECT ... FOR UPDATE` or upsert counter).
+- Guaranteed collision-free under 50+ simultaneous parallel requests (validated in `tests/sequence.test.ts`).
 
 ---
 
-### 4.3 Booking Lifecycle & State Transitions
+### 4.3 Physical Room Inventory Calendar & Tape Chart Engine
+File: [src/lib/inventory.ts](file:///Users/mrinal/Documents/hotelrajhansinternational/src/lib/inventory.ts) & [src/app/admin/room-inventory/page.tsx](file:///Users/mrinal/Documents/hotelrajhansinternational/src/app/admin/room-inventory/page.tsx)
+
+1. **Tape Chart Matrix API** (`GET /api/room-inventory?startDate=...&days=14`):
+   - Computes daily status for all 33 physical rooms across the date window.
+   - Cell statuses: `AVAILABLE`, `CONFIRMED`, `CHECKED_IN`, `BLOCKED`, `MAINTENANCE`, `DIRTY`.
+   - Aggregates daily room occupancy % and category-level availability totals.
+2. **Date Picker & Month/Year Navigation**:
+   - Month Selector: Jumps directly to 1st of any chosen month (Jan–Dec).
+   - Year Selector: Spans 2024 through 2032.
+   - Direct Datepicker: Fast date selection for future advance reservations.
+3. **Date-Based Room Blocking** (`POST /api/room-inventory`):
+   - Supports reasons: `MAINTENANCE`, `VIP_HOLD`, `DEEP_CLEANING`, `RENOVATION`, `OUT_OF_SERVICE`.
+   - Prevents booking overlapping blocked dates with validation error.
+   - Direct Unblock API (`DELETE /api/room-inventory`) releases blocked dates immediately.
+4. **Legacy Grid Cleanup**:
+   - The redundant `/admin/inventory` route permanently redirects to `/admin/room-inventory`.
+
+---
+
+### 4.4 Concurrency Double-Booking Protection & Atomic Room Allocation
+File: [src/lib/inventory.ts](file:///Users/mrinal/Documents/hotelrajhansinternational/src/lib/inventory.ts) (`allocatePhysicalRoomAtomic`)
+
+1. **Row-Level Locking**:
+   - Executes inside an interactive PostgreSQL transaction with `SERIALIZABLE` or `READ COMMITTED` isolation.
+   - Queries available physical rooms while querying overlapping `PhysicalRoomAssignment` and `RoomBlock` records:
+     $$\text{Overlap}(A_1, A_2, B_1, B_2) = (A_1 < B_2) \land (A_2 > B_1)$$
+2. **Atomic Assignment**:
+   - Selects the first unassigned physical room for the category.
+   - Inserts `PhysicalRoomAssignment` and updates `Booking.assignedRoomId`.
+   - Tested under 20 simultaneous concurrent threads competing for finite inventory (validated in `tests/concurrency.test.ts`).
+
+---
+
+### 4.5 Reservation Lifecycle & Finite State Machine (FSM)
+File: [src/lib/state-machine.ts](file:///Users/mrinal/Documents/hotelrajhansinternational/src/lib/state-machine.ts)
 
 ```mermaid
 stateDiagram-v2
-    [*] --> PENDING: Guest submits booking form
-    PENDING --> CANCELLED: Abandoned > 30 mins
-    PENDING --> CONFIRMED: Cashfree payment verified (SUCCESS)
-    CONFIRMED --> CHECKED_IN: Guest arrives at hotel reception
-    CHECKED_IN --> CHECKED_OUT: Guest departs & settles extras
+    [*] --> PENDING: Guest initiates reservation
+    PENDING --> CANCELLED: Expired after 30 mins
+    PENDING --> CONFIRMED: Payment successful & room allocated
+    CONFIRMED --> CHECKED_IN: Guest arrives (Reception check-in)
+    CHECKED_IN --> CHECKED_OUT: Guest departs (Folio settled)
     CONFIRMED --> CANCELLED: Cancellation requested
-    CANCELLED --> REFUNDED: Admin processes refund
+    CANCELLED --> REFUNDED: Admin executes refund
     CHECKED_OUT --> [*]
     REFUNDED --> [*]
 ```
 
-- **Reference ID Format**: `HRJ-YYYYMMDD-XXXX` (e.g. `HRJ-20260928-0021`). Generated sequentially based on total historical reservation count.
-- **Customer CRM Linking**:
-  - Automatically searches for customer by unique phone number.
-  - If existing, increments `visitCount` and updates contact information.
-  - If new, creates a new `Customer` profile.
+- Invalid transitions (e.g. `PENDING` directly to `CHECKED_OUT`) are rejected with `400 Bad Request`.
+- Status changes automatically append an immutable record to `AuditLog`.
 
 ---
 
-### 4.4 Cashfree Payment Gateway Integration Engine
-File: [src/lib/cashfree.ts](file:///Users/mrinal/Documents/hotelrajhansinternational/src/lib/cashfree.ts)
+### 4.6 Cashfree Payment Gateway & Unified Confirmation Pipeline
+File: [src/lib/payment-confirm.ts](file:///Users/mrinal/Documents/hotelrajhansinternational/src/lib/payment-confirm.ts)
 
-- **Endpoints**:
-  - Production: `https://api.cashfree.com/pg`
-  - Sandbox: `https://sandbox.cashfree.com/pg`
-- **Order Initialization** (`POST /orders`):
-  - Sends `order_id`, `order_amount`, `order_currency` (`INR`), `customer_details` (sanitized 10-digit phone, clean customer ID), and `order_meta.return_url`.
-  - Receives `payment_session_id` used by frontend Cashfree Web SDK V3.
-- **Checkout Modal**:
-  - Loaded via `https://sdk.cashfree.com/js/v3/cashfree.js`.
-  - Executed inside an in-page responsive modal (`redirectTarget: "_modal"`).
-
----
-
-### 4.5 Post-Payment Settlement & Dispatch Flow
-File: [src/app/api/payments/cashfree/verify-payment/route.ts](file:///Users/mrinal/Documents/hotelrajhansinternational/src/app/api/payments/cashfree/verify-payment/route.ts)
+Both the Cashfree client return endpoint (`/api/payments/cashfree/verify-payment`) and the webhook listener (`/api/payments/cashfree/webhook`) invoke the centralized `confirmBookingPayment()` pipeline:
 
 ```mermaid
 sequenceDiagram
-    participant Guest as Guest Browser
-    participant API as /api/payments/cashfree/verify-payment
-    participant CF as Cashfree PG Server
-    participant DB as Neon Database
-    participant Mail as SMTP Mailer
-    participant GS as Google Sheets API
+    participant Source as Verify API / Webhook
+    participant Engine as confirmBookingPayment()
+    participant DB as Neon PostgreSQL
+    participant Folio as Folio Ledger
+    participant Notify as Async Notifier
 
-    Guest->>API: POST { bookingId, orderId }
-    API->>CF: GET /orders/{orderId} & /payments
-    CF-->>API: { order_status: "PAID", payment_status: "SUCCESS" }
+    Source->>Engine: { bookingId, orderId, paymentId, amount, paymentMethod }
     
     rect rgb(240, 248, 255)
-        Note over API,DB: Atomic Prisma Transaction
-        API->>DB: Upsert Payment (status = SUCCESS)
-        API->>DB: Update Booking (status = CONFIRMED, paidAmount = netAmount)
+        Note over Engine,DB: Atomic Transaction Pipeline
+        Engine->>DB: Check Idempotency Guard (Already CONFIRMED & paid?)
+        Engine->>DB: Upsert Payment (status = SUCCESS, gatewayResponse)
+        Engine->>DB: Allocate Physical Room if unassigned
+        Engine->>Folio: Post Folio PAYMENT Item & Recalculate Balance (status = SETTLED, balance = 0)
+        Engine->>DB: Update Booking (status = CONFIRMED, paidAmount = amount)
+        Engine->>DB: Insert AuditLog (action = CONFIRM_BOOKING_PAYMENT, user = Cashfree Gateway)
+        Engine->>DB: Enqueue OutboxEvent (type = BOOKING_CONFIRMED)
     end
     
-    par Async Dispatch
-        API->>Mail: Send Confirmation HTML to Guest & Hotel Admin
-        API->>GS: Append Row to Bookings Tab (Idempotent)
+    par Non-Blocking Post-Payment Notifications
+        Engine->>Notify: Send HTML Confirmation Email (Guest + Hotel Admin)
+        Engine->>Notify: Sync Booking Row to Google Sheets (Tab: Bookings)
     end
     
-    API-->>Guest: { success: true, status: "CONFIRMED", bookingReference }
+    Engine-->>Source: { success: true, referenceId, assignedRoomNumber, folioNumber }
 ```
 
-1. **Idempotency Protection**: If `booking.status === "CONFIRMED"`, verification succeeds immediately without re-executing transactions.
-2. **Atomic Transaction**: Ensures payment creation/update and booking confirmation succeed or fail together.
+**Key Verification Gates**:
+1. **Idempotency Guard**: Repeated webhooks or client returns do not double-bill or duplicate folio entries.
+2. **Folio Balance Zeroing**: Full payment settles folio balance to ₹0 and sets status to `SETTLED`.
+3. **Double-Booking Shield**: Allocates room atomically via `allocatePhysicalRoomAtomic`.
+4. **Audit Trail**: Records gateway response with `userId: null` and `userName: "Cashfree Gateway"`.
 
 ---
 
-### 4.6 Transactional Email & Tax Invoice Engine
+### 4.7 Dynamic Billing Folio Ledger & Split Payments
+File: [src/lib/folio.ts](file:///Users/mrinal/Documents/hotelrajhansinternational/src/lib/folio.ts) & [src/app/admin/folios/page.tsx](file:///Users/mrinal/Documents/hotelrajhansinternational/src/app/admin/folios/page.tsx)
+
+- Every booking maintains a linked `Folio` with sequential reference `FOL-YYYYMMDD-XXXX`.
+- **Line Items**: Supports `ROOM_CHARGE`, `TAX`, `RESTAURANT`, `ROOM_SERVICE`, `LAUNDRY`, `EXTRA_BED`, `DISCOUNT`, `PAYMENT`, `REFUND`.
+- **Split Payments**: Guests can settle charges across multiple tenders (e.g. ₹2,000 Cash + ₹3,000 UPI).
+- **Balance Calculation**:
+  $$\text{Total Charges} = \sum (\text{charges}) + \sum (\text{taxes}) - \sum (\text{discounts})$$
+  $$\text{Total Payments} = \sum (\text{payments}) - \sum (\text{refunds})$$
+  $$\text{Balance Amount} = \text{Total Charges} - \text{Total Payments}$$
+- Automatically sets `FolioStatus.SETTLED` when `balanceAmount <= 0`.
+
+---
+
+### 4.8 Front Desk Operations & Walk-in Bookings
+File: [src/app/admin/front-desk/page.tsx](file:///Users/mrinal/Documents/hotelrajhansinternational/src/app/admin/front-desk/page.tsx) & [src/app/api/bookings/walk-in/route.ts](file:///Users/mrinal/Documents/hotelrajhansinternational/src/app/api/bookings/walk-in/route.ts)
+
+- **Express Walk-in Creation**: Front desk receptionists can select guest count, dates, and an available physical room directly.
+- **Tender Options**: Instant cash, card, or UPI folio payment posting.
+- **Immediate Check-in**: Transitions booking directly to `CHECKED_IN`, assigns physical room, and initializes folio.
+
+---
+
+### 4.9 Housekeeping & Maintenance Workflows
+File: [src/app/admin/housekeeping/page.tsx](file:///Users/mrinal/Documents/hotelrajhansinternational/src/app/admin/housekeeping/page.tsx) & [src/app/admin/maintenance/page.tsx](file:///Users/mrinal/Documents/hotelrajhansinternational/src/app/admin/maintenance/page.tsx)
+
+- **Housekeeping States**: `CLEAN`, `DIRTY`, `CLEANING`, `INSPECTION`, `READY`, `OUT_OF_ORDER`.
+- **Auto-Dirtying**: Checking out a guest automatically flips the physical room housekeeping status to `DIRTY`.
+- **Task Dispatching**: Managers assign rooms to housekeeping staff with priorities (`LOW`, `NORMAL`, `HIGH`, `URGENT`).
+- **Maintenance Tickets**: Rooms under repair trigger automatic calendar room blocks with reason `MAINTENANCE`.
+
+---
+
+### 4.10 Transactional Email & Tax Invoice Engine
 File: [src/lib/mailer.ts](file:///Users/mrinal/Documents/hotelrajhansinternational/src/lib/mailer.ts) & [src/lib/invoice.ts](file:///Users/mrinal/Documents/hotelrajhansinternational/src/lib/invoice.ts)
 
 - **Dual Email Notification**:
-  - Recipient 1: Guest email (if provided).
+  - Recipient 1: Guest email.
   - Recipient 2: Official Hotel Reception: `info@hotelrajhansinternational.com`
   - Recipient 3: Hotel Management: `rajhansinternational.info@gmail.com`
 - **Email Contents**:
-  - Booking Reference Badge & Verification Stamp
-  - Check-in (12:00 PM) / Check-out (11:00 AM) Schedule
-  - Itemized Tariff & GST breakdown
-  - Hotel GSTIN (`10AAAAA0000A1Z5`)
-  - Direct 1-click Google Maps Navigation Button
+  - Verification badge, Booking reference ID, Assigned Physical Room Number.
+  - Check-in (12:00 PM) / Check-out (11:00 AM) schedule.
+  - Itemized Tariff & GST breakdown.
+  - Hotel GSTIN (`10AAAAA0000A1Z5`).
+  - 1-click Google Maps Navigation button.
 - **Tax Invoice (`/api/invoice/[id]`)**:
-  - Renders a printable tax invoice adhering to Indian GST compliance.
+  - Renders printable tax invoice complying with Indian GST rules.
 
 ---
 
-### 4.7 Google Sheets Bi-Directional Synchronization
+### 4.11 Google Sheets Bi-Directional Synchronization
 File: [src/lib/googlesheets.ts](file:///Users/mrinal/Documents/hotelrajhansinternational/src/lib/googlesheets.ts)
 
-- **Authentication**: Generates self-signed RS256 JWT using Google Cloud Service Account private key and requests OAuth2 access token.
-- **Deduplication**: Reads Column A (`Bookings!A:A`) to check if `bookingReference` already exists before appending.
-- **Appended Row Format**:
-  `[Booking ID, Booking Date, Guest Name, Phone, Email, Room, Check-in, Check-out, Guests, Amount, Payment Status, Booking Status]`
+- **Authentication**: Generates self-signed RS256 JWT using Google Cloud Service Account credentials and requests OAuth2 access token.
+- **Deduplication**: Reads Column A (`Bookings!A:A`) to verify reference ID does not already exist before appending.
+- **Row Columns (A:L)**:
+  `[Reference, Date, Guest Name, Phone, Email, Room Type, Check-in, Check-out, Guests, Amount, Payment Status, Booking Status]`
 
 ---
 
-### 4.8 Location & Distance Approximation Engine
+### 4.12 Location & Distance Engine
 File: [src/lib/location.ts](file:///Users/mrinal/Documents/hotelrajhansinternational/src/lib/location.ts)
 
 - **Hotel Coordinates**: `25.2505° N, 86.9887° E` (Kachari Chowk, MG Road)
@@ -413,34 +560,13 @@ File: [src/lib/location.ts](file:///Users/mrinal/Documents/hotelrajhansinternati
 
 ---
 
-### 4.9 Authentication & Role-Based Access Control (RBAC)
-File: [src/lib/auth.ts](file:///Users/mrinal/Documents/hotelrajhansinternational/src/lib/auth.ts) & [src/proxy.ts](file:///Users/mrinal/Documents/hotelrajhansinternational/src/proxy.ts)
+### 4.13 Security, RBAC & Outbox Pattern Event Dispatching
+File: [src/lib/auth.ts](file:///Users/mrinal/Documents/hotelrajhansinternational/src/lib/auth.ts), [src/proxy.ts](file:///Users/mrinal/Documents/hotelrajhansinternational/src/proxy.ts), & [src/app/api/outbox/route.ts](file:///Users/mrinal/Documents/hotelrajhansinternational/src/app/api/outbox/route.ts)
 
-- **Token Construction**: Signed using `jose` with algorithm `HS256`, 7-day expiration, and 30-second clock tolerance.
-- **Dual Transport**:
-  1. `Cookie`: `rajhans_admin_token` (HTTP-only, Secure in production, SameSite: Lax).
-  2. `Header`: `Authorization: Bearer <token>` for programmatic API requests.
-- **Role Permissions**:
-  - `SUPER_ADMIN`: Full access to CMS settings, financial reports, user management, and payment resets.
-  - `MANAGER`: Room tariff updates, customer profile management, booking updates.
-  - `RECEPTION`: View reservations, perform check-in/out, read-only reviews and inquiries.
-  - `STAFF`: Basic read operations.
-- **Edge Middleware Guard** (`src/proxy.ts`):
-  - Any request to `/admin/*` (except `/admin/login`) without a valid JWT is redirected to `/admin/login`.
-  - Authenticated sessions accessing `/admin/login` are automatically redirected to `/admin/dashboard`.
-
----
-
-### 4.10 CMS, Review Moderation & Audit Logging
-File: [src/app/api/cms/route.ts](file:///Users/mrinal/Documents/hotelrajhansinternational/src/app/api/cms/route.ts) & [src/app/api/reviews/route.ts](file:///Users/mrinal/Documents/hotelrajhansinternational/src/app/api/reviews/route.ts)
-
-- **Dynamic CMS Settings**: Key-value settings table loaded dynamically by the public storefront:
-  - `hotel_name`, `phone_primary`, `phone_landline`, `email_official`, `address_full`, `check_in_time`, `check_out_time`, `maps_iframe_url`.
-- **Review Moderation**:
-  - Public submissions start in `PENDING` status.
-  - Admin approves or marks as `FEATURED` before they appear on the homepage.
-- **Audit Logs**:
-  - Sensitive operations (CMS updates, room deletions, payment resets) append an immutable record to the `AuditLog` table with timestamp and user ID.
+- **JWT Signing**: Uses `jose` with `HS256`, 7-day expiration, and 30s clock tolerance.
+- **Dual Transport**: HTTP-only secure cookie `rajhans_admin_token` + `Authorization: Bearer <token>` header.
+- **Edge Middleware Guard** (`src/proxy.ts`): Protects `/admin/*` routes against unauthorized access.
+- **Transactional Outbox**: Critical domain events (`BOOKING_CREATED`, `BOOKING_CONFIRMED`, `PAYMENT_RECEIVED`) write to the `OutboxEvent` table inside the DB transaction, ensuring reliable asynchronous message delivery.
 
 ---
 
@@ -448,56 +574,119 @@ File: [src/app/api/cms/route.ts](file:///Users/mrinal/Documents/hotelrajhansinte
 
 | Endpoint | Method | Access | Description |
 | :--- | :--- | :--- | :--- |
-| `/api/rooms` | `GET` | Public | Returns all active rooms with images and amenities |
+| `/api/room-inventory` | `GET` | Staff / Admin | Returns 33-room tape chart matrix, occupancy % and daily statuses |
+| `/api/room-inventory` | `POST` | Manager+ | Creates a date-based room block (maintenance, VIP hold, cleaning) |
+| `/api/room-inventory` | `DELETE` | Manager+ | Releases an active room block |
+| `/api/rooms/assign` | `POST` | Reception+ | Atomically assigns a physical room to a reservation |
+| `/api/rooms/inventory` | `GET` | Staff / Admin | Retrieves real-time room availability across date ranges |
+| `/api/rooms` | `GET` | Public | Returns room categories with base tariffs, amenities, photos |
 | `/api/rooms` | `POST` | Admin | Creates a new room category |
-| `/api/rooms/[id]` | `GET` | Public | Returns room details by ID |
-| `/api/rooms/[id]` | `PUT` | Admin | Updates pricing, capacity, amenities, or status |
+| `/api/rooms/[id]` | `GET` | Public | Returns single room category details |
+| `/api/rooms/[id]` | `PUT` | Admin | Updates base prices, extra bed charges, taxes, amenities |
 | `/api/rooms/[id]` | `DELETE` | Super Admin | Removes a room category |
-| `/api/bookings` | `GET` | Staff / Admin | Lists bookings filtered by status or search keyword |
-| `/api/bookings` | `POST` | Public | Creates a new reservation session in `PENDING` state |
-| `/api/bookings/[id]` | `GET` | Staff / Admin | Retrieves complete booking details |
-| `/api/bookings/[id]` | `PUT` | Staff / Admin | Updates booking status (`CHECKED_IN`, `CANCELLED`, etc.) |
-| `/api/bookings/check-availability` | `GET` | Public | Checks room availability for specified date range |
-| `/api/payments` | `GET` | Admin | Lists all payment transaction audit records |
-| `/api/payments/reset` | `POST` | Super Admin | Resets test payment records and resets financial metrics |
-| `/api/payments/cashfree/create-order` | `POST` | Public | Initializes order on Cashfree PG and returns session ID |
-| `/api/payments/cashfree/verify-payment` | `POST` | Public / Webhook | Verifies payment settlement and triggers confirmations |
-| `/api/payments/cashfree/webhook` | `POST` | Cashfree | Asynchronous webhook handler with HMAC-SHA256 signature |
-| `/api/cms` | `GET` | Public | Fetches global site settings, active FAQs, and reviews |
-| `/api/cms` | `PUT` | Super Admin | Updates global hotel settings |
+| `/api/bookings` | `GET` | Staff / Admin | Lists bookings filtered by status, dates, or search query |
+| `/api/bookings` | `POST` | Public | Creates pending guest reservation session |
+| `/api/bookings/[id]` | `GET` | Staff / Admin | Retrieves reservation details with folio and room assignment |
+| `/api/bookings/[id]` | `PUT` | Reception+ | Updates booking status (`CHECKED_IN`, `CHECKED_OUT`, `CANCELLED`) |
+| `/api/bookings/[id]/extend` | `POST` | Reception+ | Extends stay dates if physical room has no conflicts |
+| `/api/bookings/[id]/modify` | `POST` | Reception+ | Modifies guest count or room category |
+| `/api/bookings/walk-in` | `POST` | Reception+ | Creates instant front desk walk-in booking with room assignment |
+| `/api/bookings/check-availability` | `GET` | Public | Checks real-time date availability for room categories |
+| `/api/folios` | `GET` | Staff / Admin | Lists all active and settled folios |
+| `/api/folios` | `POST` | Reception+ | Posts new line item charge or payment to guest folio |
+| `/api/folios/[id]` | `GET` | Staff / Admin | Returns itemized folio ledger with balance breakdown |
+| `/api/folios/[id]` | `PUT` | Reception+ | Settles or closes folio |
+| `/api/cashier/shifts` | `GET` | Staff / Admin | Lists active and historical cashier shifts |
+| `/api/cashier/shifts` | `POST` | Reception+ | Opens/closes cashier shift or records cash drop |
+| `/api/housekeeping` | `GET` | Housekeeping+ | Returns room cleaning statuses and assigned cleaning tasks |
+| `/api/housekeeping` | `PUT` | Housekeeping+ | Updates room cleaning state (`CLEAN`, `DIRTY`, `INSPECTED`) |
+| `/api/maintenance` | `GET` | Maintenance+ | Lists open maintenance tickets and out-of-order rooms |
+| `/api/maintenance` | `POST` | Maintenance+ | Submits maintenance repair work order |
+| `/api/restaurant` | `GET` | Restaurant+ | Returns F&B menu catalog |
+| `/api/restaurant` | `POST` | Restaurant+ | Posts restaurant or room service charge to room folio |
+| `/api/promotions` | `GET` | Public / Admin | Validates coupon code or lists active promotions |
+| `/api/promotions` | `POST` | Manager+ | Creates new promotional discount code |
+| `/api/refunds` | `POST` | Super Admin | Executes payment refund through Cashfree API |
+| `/api/audit` | `GET` | Manager+ | Queries immutable audit log entries |
+| `/api/outbox` | `GET` | Super Admin | Inspects pending and processed outbox events |
+| `/api/staff` | `GET` | Manager+ | Lists staff roster and departmental roles |
+| `/api/staff` | `POST` | Super Admin | Registers new staff member or updates permissions |
+| `/api/guests/[id]/documents` | `POST` | Reception+ | Uploads and associates guest ID proof documents |
+| `/api/payments` | `GET` | Admin | Lists Cashfree payment transactions |
+| `/api/payments/reset` | `POST` | Super Admin | Resets test payment records |
+| `/api/payments/cashfree/create-order` | `POST` | Public | Creates Cashfree PG order & returns session ID |
+| `/api/payments/cashfree/verify-payment` | `POST` | Public | Verifies payment return and executes unified confirmation |
+| `/api/payments/cashfree/webhook` | `POST` | Cashfree | Asynchronous webhook verification handler |
+| `/api/cms` | `GET` | Public | Fetches global site settings and FAQs |
+| `/api/cms` | `PUT` | Super Admin | Updates global CMS settings |
 | `/api/contact` | `POST` | Public | Submits guest inquiry and syncs to Google Sheets |
 | `/api/customers` | `GET` | Admin | Searches customer CRM database |
 | `/api/reviews` | `GET` | Public | Retrieves approved guest reviews |
 | `/api/reviews` | `POST` | Public | Submits a guest review for moderation |
-| `/api/reports` | `GET` | Admin | Returns financial KPIs, revenue charts, and occupancy data |
-| `/api/invoice/[id]` | `GET` | Public / Admin | Renders printable tax invoice |
+| `/api/reports` | `GET` | Admin | Returns financial KPIs, ADR, RevPAR, and occupancy |
+| `/api/invoice/[id]` | `GET` | Public / Admin | Renders printable GST tax invoice |
 | `/api/location/distance` | `GET` | Public | Returns distance calculation from Bhagalpur Junction |
-| `/api/auth/login` | `POST` | Public | Authenticates admin credentials and sets session cookie |
-| `/api/auth/logout` | `POST` | Admin | Clears authentication session cookie |
-| `/api/auth/me` | `GET` | Admin | Returns currently logged-in user profile |
+| `/api/auth/login` | `POST` | Public | Authenticates credentials and sets session cookie |
+| `/api/auth/logout` | `POST` | Admin | Clears session cookie |
+| `/api/auth/me` | `GET` | Admin | Returns logged-in user profile |
 
 ---
 
 ## 6. Frontend Architecture & Page Routes
 
-### Public Pages
-- **`/` (Homepage)**: Luxury gold/cream presentation with hero carousel, dynamic room rates, live availability badges, takshshila restaurant section, amenities, customer reviews, FAQs, and interactive Google Maps.
-- **`/gallery`**: Interactive photo gallery classified into Reception, Executive Rooms, Deluxe Suites, Restaurant, and Parlour.
-- **`/attraction`**: Guide to regional Bhagalpur tourist landmarks with distance and travel times.
+### Public Guest Pages
+- **`/` (Homepage)**: Luxury gold/cream theme, hero carousel, live room rates, booking modal with Cashfree SDK, Takshshila restaurant showcase, amenities, reviews, FAQs, and interactive location map.
+- **`/gallery`**: Filterable photo gallery (Reception, Executive, Deluxe, Royal Suite, Restaurant, Parlour).
+- **`/attraction`**: Bhagalpur regional tourist destinations with distances and driving times.
 
 ### Admin Dashboard Pages (`/admin/*`)
-- **`/admin/dashboard`**: Executive summary cards (Total Revenue, Confirmed Bookings, Available Rooms, Occupancy Rate), revenue area chart, today's movements, and quick action buttons.
-- **`/admin/bookings`**: Reservation ledger with status filter tabs (`ALL`, `PENDING`, `CONFIRMED`, `CHECKED_IN`, `CHECKED_OUT`, `CANCELLED`), guest search bar, status switcher, and direct PDF invoice links.
-- **`/admin/rooms`**: Visual tariff editor for single/double base prices, status toggling (`AVAILABLE`, `OCCUPIED`, `MAINTENANCE`), and amenity configuration.
-- **`/admin/payments`**: Audit ledger recording Cashfree Order IDs, Payment IDs, amounts, payment methods, and settlement status. Includes "Reset Payment Data" button.
-- **`/admin/customers`**: Guest CRM showing lifetime visit count, total revenue per guest, contact phone/email, and notes.
-- **`/admin/cms`**: Form controls to modify hotel address, official contact numbers, email addresses, and check-in/out policies without code redeployments.
-- **`/admin/reviews`**: Review approval board to inspect, publish, or feature customer testimonials.
+- **`/admin/dashboard`**: KPI cards (Revenue, Confirmed Bookings, Available Rooms, Occupancy %), revenue area chart, today's arrivals/departures, and quick actions.
+- **`/admin/front-desk`**: Front Desk express check-in/out, walk-in reservations, and live room assignment.
+- **`/admin/room-inventory`**: Master Physical Room Tape Chart Calendar with Month/Year picker, date selector, occupancy stats, and date blocking.
+- **`/admin/inventory`**: Direct client redirect to `/admin/room-inventory`.
+- **`/admin/bookings`**: Reservation ledger with status filter tabs, search bar, and PDF invoice links.
+- **`/admin/folios`**: Dynamic billing folio ledger, itemized charges, and split payment settlement.
+- **`/admin/cashier`**: Cashier shift management, opening float, cash drops, and end-of-shift reconciliation.
+- **`/admin/housekeeping`**: Housekeeping board with room cleaning statuses (`CLEAN`, `DIRTY`, `INSPECTED`) and staff task assignments.
+- **`/admin/maintenance`**: Out-of-order room tracker and repair work order management.
+- **`/admin/pos`**: Point of Sale restaurant billing directly linked to guest room folios.
+- **`/admin/rooms`**: Visual tariff editor for single/double prices, taxes, and amenities.
+- **`/admin/customers`**: CRM database with guest visit history, total spends, and VIP tags.
+- **`/admin/payments`**: Cashfree transaction audit trail with Order IDs, Payment IDs, and settlement logs.
+- **`/admin/promotions`**: Coupon code management and discount campaigns.
+- **`/admin/reports`**: Revenue reporting, ADR, RevPAR, occupancy rate, and CSV exports.
+- **`/admin/audit`**: Immutable system audit trail tracking all administrative actions.
+- **`/admin/staff`**: Staff directory, role-based access control, and shift assignments.
+- **`/admin/cms`**: Live site editor for contact numbers, addresses, and check-in/out policies.
+- **`/admin/reviews`**: Guest review moderation board (Approve, Feature, Reject).
 - **`/admin/messages`**: Contact inbox displaying inquiries with reply tools.
+- **`/admin/gallery`**: Media gallery organizer and photo uploader.
+- **`/admin/settings`**: Hotel policies, GSTIN, check-in/check-out timings, and system configurations.
 
 ---
 
-## 7. Environment Variables Matrix
+## 7. Automated Testing Suite (8 Suites)
+
+The application enforces automated end-to-end regression protection across 8 comprehensive test suites executed via `npm test`:
+
+```bash
+npm test
+```
+
+| Suite | File | Coverage & Validation Focus |
+| :--- | :--- | :--- |
+| **1. Pricing Engine** | `tests/pricing.test.ts` | Base single/double rates, extra guests, tiered GST brackets (12%/18%) |
+| **2. Sequence Generator** | `tests/sequence.test.ts` | 50 concurrent reference generation calls (100% collision-free) |
+| **3. Dynamic Folio** | `tests/folio.test.ts` | Folio line items, tax additions, split payments, balance settlement |
+| **4. State Machine (FSM)** | `tests/state-machine.test.ts` | Booking lifecycle transitions, allowed actions & validation rules |
+| **5. Security & RBAC** | `tests/security.test.ts` | JWT tokens, role-based route access, HMAC verification, security headers |
+| **6. Room Inventory** | `tests/room-inventory.test.ts` | 33-room tape chart matrix, date-based room blocks, unblocking |
+| **7. Payment Pipeline** | `tests/payment-confirm.test.ts` | All 6 gates: Booking, Payment, Folio balance, AuditLog, Outbox, Idempotency |
+| **8. Concurrency Stress** | `tests/concurrency.test.ts` | 20 simultaneous bookings double-booking stress test with atomic locking |
+
+---
+
+## 8. Environment Variables Matrix
 
 | Variable | Required | Description | Example / Default |
 | :--- | :--- | :--- | :--- |
@@ -520,13 +709,13 @@ File: [src/app/api/cms/route.ts](file:///Users/mrinal/Documents/hotelrajhansinte
 
 ---
 
-## 8. Production Deployment & Operational Best Practices
+## 9. Production Deployment & Operational Best Practices
 
 1. **Prisma Client Generation**:
    - The build script in `package.json` executes `prisma generate && next build`.
    - In serverless environments, Prisma instance pooling is maintained on `globalThis` to prevent connection exhaustion.
 2. **Serverless Cache Invalidation**:
-   - Dynamic API route handlers (`/api/rooms`, `/api/cms`, `/api/bookings`, `/api/payments`) declare:
+   - Dynamic API route handlers declare:
      ```typescript
      export const dynamic = "force-dynamic";
      export const revalidate = 0;
@@ -534,3 +723,8 @@ File: [src/app/api/cms/route.ts](file:///Users/mrinal/Documents/hotelrajhansinte
    - All fetch operations across the admin panel utilize `adminFetch` with `cache: "no-store"` and `Cache-Control: no-cache` headers.
 3. **Database Migration Policy**:
    - When modifying schema models, run `npx prisma db push` to synchronize Neon PostgreSQL without resetting live production data.
+4. **Resilient Transaction Timeouts**:
+   - For high-concurrency database transactions under cloud latency, configure Prisma interactive transactions with:
+     ```typescript
+     prisma.$transaction(async (tx) => { ... }, { maxWait: 10000, timeout: 45000 })
+     ```

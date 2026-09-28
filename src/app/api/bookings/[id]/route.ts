@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { transitionBookingStatus } from "@/lib/booking-state";
+import { apiError, apiSuccess } from "@/lib/security";
 
 export const revalidate = 0;
 
@@ -14,27 +16,34 @@ export async function GET(
     const booking = await prisma.booking.findUnique({
       where: { id },
       include: {
-        customer: true,
+        customer: {
+          include: { documents: true, preferences: true },
+        },
         room: { include: { images: true } },
-        payments: true,
+        payments: { orderBy: { createdAt: "desc" } },
+        roomAssignments: {
+          include: { physicalRoom: true },
+          orderBy: { assignedAt: "desc" },
+        },
+        folio: {
+          include: { items: { orderBy: { createdAt: "asc" } } },
+        },
+        guests: true,
+        refunds: true,
+        modifications: true,
+        extensions: true,
+        cancellation: true,
       },
     });
 
     if (!booking) {
-      return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+      return apiError("NOT_FOUND", "Booking not found", 404);
     }
 
-    return NextResponse.json(
-      { success: true, booking },
-      {
-        headers: {
-          "Cache-Control": "no-store, max-age=0, must-revalidate",
-        },
-      }
-    );
-  } catch (error) {
+    return apiSuccess({ booking });
+  } catch (error: any) {
     console.error("GET Booking Single Error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiError("DATABASE_ERROR", error?.message || "Internal server error", 500);
   }
 }
 
@@ -45,12 +54,12 @@ export async function PUT(
   try {
     const session = await getSession(request);
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiError("UNAUTHORIZED", "Unauthorized access", 401);
     }
 
     const { id } = await params;
-    const body = await request.json();
-    const { status, paidAmount, specialRequests, notes } = body;
+    const body = await request.json().catch(() => ({}));
+    const { status, specialRequests, notes, reason, bypassBalanceCheck } = body;
 
     const existing = await prisma.booking.findUnique({
       where: { id },
@@ -58,51 +67,47 @@ export async function PUT(
     });
 
     if (!existing) {
-      return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+      return apiError("NOT_FOUND", "Booking not found", 404);
     }
 
-    const updated = await prisma.booking.update({
-      where: { id },
-      data: {
-        status: status || existing.status,
-        paidAmount: paidAmount !== undefined ? parseFloat(paidAmount) : existing.paidAmount,
-        specialRequests: specialRequests !== undefined ? specialRequests : existing.specialRequests,
-      },
-      include: { customer: true, room: true, payments: true },
-    });
-
-    // Update customer total spent if status completed/checked-out
-    if (status === "CHECKED_OUT") {
-      await prisma.customer.update({
-        where: { id: existing.customerId },
-        data: {
-          totalSpent: { increment: updated.netAmount },
-        },
+    // 1. If status transition is requested, validate and execute via state machine
+    if (status && status !== existing.status) {
+      await transitionBookingStatus({
+        bookingId: id,
+        targetStatus: status,
+        userId: session.userId,
+        userName: session.name,
+        reason: reason || notes,
+        bypassBalanceCheck: Boolean(bypassBalanceCheck && session.role === "SUPER_ADMIN"),
       });
     }
 
-    // Audit log
-    await prisma.auditLog.create({
+    // 2. Update optional fields
+    const updated = await prisma.booking.update({
+      where: { id },
       data: {
-        userId: session.userId,
-        userName: session.name,
-        action: "UPDATE_BOOKING_STATUS",
-        entity: "Booking",
-        entityId: id,
-        details: `Updated booking ${existing.referenceId} status to ${status}`,
+        specialRequests:
+          specialRequests !== undefined ? specialRequests : existing.specialRequests,
+      },
+      include: {
+        customer: true,
+        room: true,
+        payments: true,
+        roomAssignments: { include: { physicalRoom: true } },
+        folio: { include: { items: true } },
       },
     });
 
-    // Invalidate public & admin caches
+    // Invalidate caches
     revalidatePath("/", "layout");
     revalidatePath("/admin/bookings");
     revalidatePath("/admin/dashboard");
     revalidatePath("/admin/reports");
     revalidatePath("/admin/customers");
 
-    return NextResponse.json({ success: true, booking: updated });
-  } catch (error) {
+    return apiSuccess({ booking: updated });
+  } catch (error: any) {
     console.error("PUT Booking Error:", error);
-    return NextResponse.json({ error: "Failed to update booking" }, { status: 500 });
+    return apiError("DATABASE_ERROR", error?.message || "Failed to update booking", 400);
   }
 }

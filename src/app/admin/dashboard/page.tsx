@@ -35,7 +35,7 @@ export default function AdminDashboardPage() {
       .then((res) => res.json())
       .then((d) => {
         if (d.success) {
-          setData(d);
+          setData(d.data || d);
         }
       })
       .catch(console.error)

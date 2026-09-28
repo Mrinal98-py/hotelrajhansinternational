@@ -8,10 +8,17 @@ generator client {
   binaryTargets = ["native", "rhel-openssl-1.0.x", "rhel-openssl-3.0.x", "debian-openssl-3.0.x"]
 }
 
+// ----------------------------------------------------
+// ENUMS
+// ----------------------------------------------------
+
 enum Role {
   SUPER_ADMIN
   MANAGER
   RECEPTION
+  HOUSEKEEPING
+  MAINTENANCE
+  RESTAURANT
   STAFF
 }
 
@@ -24,18 +31,48 @@ enum RoomType {
 
 enum RoomStatus {
   AVAILABLE
-  MAINTENANCE
   OCCUPIED
+  RESERVED
+  DIRTY
+  CLEANING
+  INSPECTION
+  OUT_OF_ORDER
+  MAINTENANCE
   DEACTIVATED
+}
+
+enum HousekeepingStatus {
+  CLEAN
+  DIRTY
+  CLEANING
+  INSPECTION
+  READY
+  OUT_OF_ORDER
+}
+
+enum MaintenanceStatus {
+  NONE
+  REPORTED
+  UNDER_REPAIR
+  OUT_OF_ORDER
 }
 
 enum BookingStatus {
   PENDING
   CONFIRMED
-  CANCELLED
   CHECKED_IN
   CHECKED_OUT
+  CANCELLED
+  NO_SHOW
   REFUNDED
+}
+
+enum AssignmentStatus {
+  ASSIGNED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  TRANSFERRED
 }
 
 enum PaymentStatus {
@@ -53,6 +90,89 @@ enum PaymentMethod {
   CASH
 }
 
+enum FolioStatus {
+  OPEN
+  CLOSED
+  SETTLED
+  VOID
+}
+
+enum FolioItemType {
+  ROOM_CHARGE
+  RESTAURANT
+  ROOM_SERVICE
+  LAUNDRY
+  MINIBAR
+  EXTRA_BED
+  SERVICE
+  TAX
+  DISCOUNT
+  ADJUSTMENT
+  PAYMENT
+  REFUND
+}
+
+enum RefundStatus {
+  PENDING
+  PROCESSED
+  FAILED
+  REJECTED
+}
+
+enum ShiftStatus {
+  OPEN
+  CLOSED
+  RECONCILED
+}
+
+enum CashTxType {
+  CASH_IN
+  CASH_OUT
+  PAYMENT_RECEIVED
+  REFUND_PAID
+  EXPENSE
+  DROP
+}
+
+enum TaskType {
+  CHECKOUT_CLEAN
+  DAILY_CLEAN
+  DEEP_CLEAN
+  INSPECTION
+  TOUCH_UP
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  INSPECTION
+  COMPLETED
+  CANCELLED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum TicketStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  WAITING_PARTS
+  RESOLVED
+  CLOSED
+}
+
 enum MessageStatus {
   UNREAD
   READ
@@ -67,6 +187,50 @@ enum ReviewStatus {
   FEATURED
 }
 
+enum ServiceCategoryType {
+  SPA
+  LAUNDRY
+  TRANSPORT
+  MINIBAR
+  ROOM_SERVICE
+  OTHER
+}
+
+enum OrderStatus {
+  PENDING
+  PREPARING
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentOption {
+  PAID_NOW
+  CHARGE_TO_ROOM
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FLAT
+}
+
+enum DocumentType {
+  AADHAAR
+  PASSPORT
+  DRIVING_LICENSE
+  VOTER_ID
+  OTHER
+}
+
+enum DocumentStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+// ----------------------------------------------------
+// CORE USER & STAFF MODELS
+// ----------------------------------------------------
+
 model User {
   id           String     @id @default(uuid())
   email        String     @unique
@@ -79,7 +243,70 @@ model User {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   auditLogs    AuditLog[]
+  employee     Employee?
 }
+
+model Department {
+  id          String     @id @default(uuid())
+  name        String     @unique
+  code        String     @unique
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  employees   Employee[]
+}
+
+model Employee {
+  id            String            @id @default(uuid())
+  userId        String?           @unique
+  employeeCode  String            @unique
+  firstName     String
+  lastName      String
+  email         String            @unique
+  phone         String
+  role          Role              @default(STAFF)
+  departmentId  String?
+  salary        Float?
+  dateOfJoining DateTime          @default(now())
+  isActive      Boolean           @default(true)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  user          User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  department    Department?       @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  shifts        StaffShift[]
+  attendance    StaffAttendance[]
+}
+
+model StaffShift {
+  id         String   @id @default(uuid())
+  employeeId String
+  shiftType  String   // MORNING, EVENING, NIGHT, GENERAL
+  date       String   // YYYY-MM-DD
+  startTime  String   // HH:MM
+  endTime    String   // HH:MM
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+model StaffAttendance {
+  id           String    @id @default(uuid())
+  employeeId   String
+  date         String    // YYYY-MM-DD
+  status       String    // PRESENT, ABSENT, HALF_DAY, LEAVE
+  checkInTime  DateTime?
+  checkOutTime DateTime?
+  notes        String?
+  createdAt    DateTime  @default(now())
+  employee     Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, date])
+}
+
+// ----------------------------------------------------
+// ROOM INVENTORY & PHYSICAL ROOMS
+// ----------------------------------------------------
 
 model Room {
   id              String         @id @default(uuid())
@@ -96,12 +323,16 @@ model Room {
   taxPercentage   Float          @default(12)
   status          RoomStatus     @default(AVAILABLE)
   displayOrder    Int            @default(0)
+  totalAvailable  Int            @default(1)
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   images          RoomImage[]
   amenities       RoomAmenity[]
   availabilities  Availability[]
   bookings        Booking[]
+  physicalRooms   PhysicalRoom[]
+  ratePlans       RatePlan[]
+  seasonalRates   SeasonalRate[]
 }
 
 model RoomImage {
@@ -121,6 +352,44 @@ model RoomAmenity {
   room        Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
 }
 
+model PhysicalRoom {
+  id                  String             @id @default(uuid())
+  roomNumber          String             @unique // e.g. "101", "102", "201"
+  floor               Int                @default(1)
+  roomTypeId          String
+  status              RoomStatus         @default(AVAILABLE)
+  housekeepingStatus  HousekeepingStatus @default(READY)
+  maintenanceStatus  MaintenanceStatus  @default(NONE)
+  isActive            Boolean            @default(true)
+  notes               String?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  roomType            Room               @relation(fields: [roomTypeId], references: [id], onDelete: Restrict)
+  assignments         RoomAssignment[]
+  housekeepingTasks   HousekeepingTask[]
+  maintenanceTickets  MaintenanceTicket[]
+
+  @@index([roomTypeId, status])
+  @@index([housekeepingStatus])
+}
+
+model RoomAssignment {
+  id             String           @id @default(uuid())
+  bookingId      String
+  physicalRoomId String
+  assignedAt     DateTime         @default(now())
+  assignedBy     String?
+  checkInTime    DateTime?
+  checkOutTime   DateTime?
+  status         AssignmentStatus @default(ASSIGNED)
+  notes          String?
+  booking        Booking          @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  physicalRoom   PhysicalRoom     @relation(fields: [physicalRoomId], references: [id], onDelete: Restrict)
+
+  @@index([physicalRoomId, status])
+  @@index([bookingId])
+}
+
 model Availability {
   id     String @id @default(uuid())
   roomId String
@@ -132,44 +401,224 @@ model Availability {
   @@unique([roomId, date])
 }
 
+// ----------------------------------------------------
+// GUEST MANAGEMENT & CRM
+// ----------------------------------------------------
+
 model Customer {
-  id             String    @id @default(uuid())
-  name           String
-  phone          String    @unique
-  email          String?
-  address        String?
-  idProofNumber  String?
-  vipStatus      Boolean   @default(false)
-  visitCount     Int       @default(0)
-  totalSpent     Float     @default(0)
-  notes          String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  bookings       Booking[]
+  id            String            @id @default(uuid())
+  name          String
+  phone         String            @unique
+  email         String?
+  address       String?
+  city          String?
+  state         String?
+  country       String?           @default("India")
+  dateOfBirth   DateTime?
+  gender        String?
+  nationality   String?           @default("Indian")
+  idProofType   String?
+  idProofNumber String?
+  vipStatus     Boolean           @default(false)
+  visitCount    Int               @default(0)
+  totalSpent    Float             @default(0)
+  notes         String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  bookings      Booking[]
+  documents     GuestDocument[]
+  preferences   GuestPreference[]
+
+  @@index([phone])
+  @@index([email])
 }
 
+model GuestDocument {
+  id             String         @id @default(uuid())
+  customerId     String
+  documentType   DocumentType   @default(AADHAAR)
+  documentNumber String
+  fileUrl        String
+  verifiedStatus DocumentStatus @default(PENDING)
+  verifiedAt     DateTime?
+  verifiedBy     String?
+  notes          String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  customer       Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+}
+
+model GuestPreference {
+  id         String   @id @default(uuid())
+  customerId String
+  category   String   // ROOM, FOOD, AMENITY, GENERAL
+  preference String
+  createdAt  DateTime @default(now())
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+}
+
+model BookingGuest {
+  id             String        @id @default(uuid())
+  bookingId      String
+  name           String
+  phone          String?
+  email          String?
+  age            Int?
+  gender         String?
+  idProofType    DocumentType?
+  idProofNumber  String?
+  isPrimary      Boolean       @default(false)
+  createdAt      DateTime      @default(now())
+  booking        Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+}
+
+// ----------------------------------------------------
+// RESERVATIONS & BOOKING LIFECYCLE
+// ----------------------------------------------------
+
 model Booking {
-  id              String        @id @default(uuid())
-  referenceId     String        @unique // e.g. HRJ-20260801-0001
-  customerId      String
-  roomId          String
-  checkIn         DateTime
-  checkOut        DateTime
-  guestsCount     Int           @default(2)
-  adults          Int           @default(2)
-  children        Int           @default(0)
-  specialRequests String?
-  totalAmount     Float
-  taxAmount       Float
-  discountAmount  Float         @default(0)
-  netAmount       Float
-  paidAmount      Float         @default(0)
-  status          BookingStatus @default(PENDING)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  customer        Customer      @relation(fields: [customerId], references: [id])
-  room            Room          @relation(fields: [roomId], references: [id])
-  payments        Payment[]
+  id                 String                @id @default(uuid())
+  referenceId        String                @unique // e.g. HRJ-20260928-0001
+  customerId         String
+  roomId             String                // Room category / RoomType ID
+  assignedRoomId     String?               // Current active PhysicalRoom ID
+  checkIn            DateTime
+  checkOut           DateTime
+  guestsCount        Int                   @default(2)
+  adults             Int                   @default(2)
+  children           Int                   @default(0)
+  specialRequests    String?
+  totalAmount        Float
+  taxAmount          Float
+  discountAmount     Float                 @default(0)
+  netAmount          Float
+  paidAmount         Float                 @default(0)
+  appliedRoomRate    Float?
+  appliedTaxRate     Float?
+  appliedDiscount    Float?
+  pricingBreakdown   Json?
+  status             BookingStatus         @default(PENDING)
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  customer           Customer              @relation(fields: [customerId], references: [id])
+  room               Room                  @relation(fields: [roomId], references: [id])
+  payments           Payment[]
+  roomAssignments    RoomAssignment[]
+  guests             BookingGuest[]
+  folio              Folio?
+  refunds            Refund[]
+  modifications      BookingModification[]
+  extensions         StayExtension[]
+  cancellation       BookingCancellation?
+  serviceOrders      ServiceOrder[]
+  restaurantOrders   RestaurantOrder[]
+
+  @@index([status])
+  @@index([checkIn, checkOut])
+  @@index([customerId])
+  @@index([roomId])
+}
+
+model BookingModification {
+  id              String   @id @default(uuid())
+  bookingId       String
+  modifiedBy      String
+  reason          String
+  oldData         Json
+  newData         Json
+  priceDifference Float    @default(0)
+  createdAt       DateTime @default(now())
+  booking         Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+}
+
+model StayExtension {
+  id               String   @id @default(uuid())
+  bookingId        String
+  previousCheckOut DateTime
+  newCheckOut      DateTime
+  additionalNights Int
+  additionalAmount Float
+  taxAmount        Float
+  paid             Boolean  @default(false)
+  paymentId        String?
+  createdBy        String
+  createdAt        DateTime @default(now())
+  booking          Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+}
+
+model CancellationPolicy {
+  id                  String   @id @default(uuid())
+  name                String   @unique
+  description         String?
+  hoursBeforeCheckIn  Int      @default(24)
+  refundPercentage    Float    @default(100)
+  feeAmount           Float    @default(0)
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model BookingCancellation {
+  id             String   @id @default(uuid())
+  bookingId      String   @unique
+  cancelledBy    String?
+  reason         String?
+  policyApplied  String?
+  feeAmount      Float    @default(0)
+  refundAmount   Float    @default(0)
+  status         String   @default("PENDING") // PENDING, REFUNDED, COMPLETED
+  createdAt      DateTime @default(now())
+  booking        Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+}
+
+// ----------------------------------------------------
+// BILLING, FOLIO, SPLIT PAYMENTS & REFUNDS
+// ----------------------------------------------------
+
+model Folio {
+  id             String        @id @default(uuid())
+  bookingId      String        @unique
+  folioNumber    String        @unique // e.g. FOL-20260928-0001
+  status         FolioStatus   @default(OPEN)
+  totalCharges   Float         @default(0)
+  totalTaxes     Float         @default(0)
+  totalDiscounts Float         @default(0)
+  totalPaid      Float         @default(0)
+  balanceAmount  Float         @default(0)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  booking        Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  items          FolioItem[]
+
+  @@index([status])
+}
+
+model FolioItem {
+  id          String        @id @default(uuid())
+  folioId     String
+  itemType    FolioItemType
+  description String
+  quantity    Int           @default(1)
+  unitPrice   Float
+  amount      Float
+  taxRate     Float         @default(0)
+  taxAmount   Float         @default(0)
+  referenceId String?       // ServiceOrder ID, RestaurantOrder ID, Payment ID
+  postedBy    String?
+  createdAt   DateTime      @default(now())
+  folio       Folio         @relation(fields: [folioId], references: [id], onDelete: Cascade)
+
+  @@index([folioId])
 }
 
 model Payment {
@@ -182,9 +631,324 @@ model Payment {
   method            PaymentMethod @default(UPI)
   status            PaymentStatus @default(PENDING)
   gatewayResponse   String?
+  idempotencyKey    String?       @unique
+  referenceNote     String?
+  receivedBy        String?
   createdAt         DateTime      @default(now())
   booking           Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  refunds           Refund[]
+
+  @@index([bookingId])
+  @@index([cashfreeOrderId])
+  @@index([status])
 }
+
+model Refund {
+  id               String       @id @default(uuid())
+  paymentId        String?
+  bookingId        String
+  refundAmount     Float
+  reason           String
+  status           RefundStatus @default(PENDING)
+  gatewayRefundId  String?
+  idempotencyKey   String       @unique
+  initiatedBy      String
+  approvedBy       String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  payment          Payment?     @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  booking          Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@index([status])
+}
+
+// ----------------------------------------------------
+// CASH DRAWER & CASHIER SHIFT MANAGEMENT
+// ----------------------------------------------------
+
+model CashDrawer {
+  id             String         @id @default(uuid())
+  name           String         @unique // e.g. "Front Desk Drawer 1"
+  currentBalance Float          @default(0)
+  isActive       Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  shifts         CashierShift[]
+}
+
+model CashierShift {
+  id                     String            @id @default(uuid())
+  drawerId               String
+  cashierId              String
+  cashierName            String
+  openedAt               DateTime          @default(now())
+  closedAt               DateTime?
+  openingBalance         Float
+  closingBalanceExpected Float             @default(0)
+  closingBalanceActual   Float?
+  discrepancy            Float?
+  status                 ShiftStatus       @default(OPEN)
+  notes                  String?
+  supervisorId           String?
+  drawer                 CashDrawer        @relation(fields: [drawerId], references: [id], onDelete: Restrict)
+  transactions           CashTransaction[]
+
+  @@index([drawerId, status])
+}
+
+model CashTransaction {
+  id          String       @id @default(uuid())
+  shiftId     String
+  type        CashTxType
+  amount      Float
+  reason      String
+  bookingId   String?
+  paymentId   String?
+  recordedBy  String
+  createdAt   DateTime     @default(now())
+  shift       CashierShift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+
+  @@index([shiftId])
+}
+
+// ----------------------------------------------------
+// HOUSEKEEPING & MAINTENANCE
+// ----------------------------------------------------
+
+model HousekeepingTask {
+  id             String       @id @default(uuid())
+  physicalRoomId String
+  taskType       TaskType     @default(CHECKOUT_CLEAN)
+  priority       TaskPriority @default(MEDIUM)
+  status         TaskStatus   @default(PENDING)
+  assignedTo     String?
+  assignedToName String?
+  inspectedBy    String?
+  startedAt      DateTime?
+  completedAt    DateTime?
+  notes          String?
+  checklist      Json?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  physicalRoom   PhysicalRoom @relation(fields: [physicalRoomId], references: [id], onDelete: Cascade)
+
+  @@index([physicalRoomId, status])
+}
+
+model MaintenanceTicket {
+  id             String         @id @default(uuid())
+  physicalRoomId String?
+  title          String
+  description    String
+  category       String         // ELECTRICAL, PLUMBING, HVAC, FURNITURE, APPLIANCE, CIVIL, OTHER
+  priority       TicketPriority @default(MEDIUM)
+  status         TicketStatus   @default(OPEN)
+  assignedTo     String?
+  estimatedCost  Float?
+  actualCost     Float?
+  blocksRoom     Boolean        @default(false)
+  reportedBy     String
+  resolvedAt     DateTime?
+  notes          String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  physicalRoom   PhysicalRoom?  @relation(fields: [physicalRoomId], references: [id], onDelete: SetNull)
+
+  @@index([physicalRoomId, status])
+  @@index([blocksRoom, status])
+}
+
+// ----------------------------------------------------
+// HOTEL SERVICES & RESTAURANT POS FOUNDATION
+// ----------------------------------------------------
+
+model HotelService {
+  id          String              @id @default(uuid())
+  name        String
+  category    ServiceCategoryType @default(OTHER)
+  price       Float
+  taxRate     Float               @default(18)
+  description String?
+  isActive    Boolean             @default(true)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+model ServiceOrder {
+  id             String             @id @default(uuid())
+  bookingId      String?
+  physicalRoomId String?
+  guestName      String
+  orderStatus    OrderStatus        @default(PENDING)
+  paymentType    PaymentOption      @default(CHARGE_TO_ROOM)
+  totalAmount    Float
+  taxAmount      Float              @default(0)
+  netAmount      Float
+  folioItemId    String?
+  notes          String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  booking        Booking?           @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  items          ServiceOrderItem[]
+
+  @@index([bookingId])
+}
+
+model ServiceOrderItem {
+  id          String       @id @default(uuid())
+  orderId     String
+  serviceId   String?
+  itemName    String
+  quantity    Int          @default(1)
+  unitPrice   Float
+  totalAmount Float
+  order       ServiceOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+model MenuCategory {
+  id           String     @id @default(uuid())
+  name         String     @unique
+  displayOrder Int        @default(0)
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  items        MenuItem[]
+}
+
+model MenuItem {
+  id          String                @id @default(uuid())
+  categoryId  String
+  name        String
+  description String?
+  price       Float
+  isVeg       Boolean               @default(true)
+  isAvailable Boolean               @default(true)
+  category    MenuCategory          @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  orderItems  RestaurantOrderItem[]
+
+  @@index([categoryId])
+}
+
+model RestaurantOrder {
+  id             String                @id @default(uuid())
+  orderNumber    String                @unique // e.g. RES-20260928-0001
+  tableNumber    String?
+  physicalRoomId String?
+  bookingId      String?
+  status         OrderStatus           @default(PENDING)
+  paymentType    PaymentOption         @default(PAID_NOW)
+  totalAmount    Float
+  taxAmount      Float                 @default(0)
+  netAmount      Float
+  folioItemId    String?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  booking        Booking?              @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  items          RestaurantOrderItem[]
+
+  @@index([bookingId])
+}
+
+model RestaurantOrderItem {
+  id         String          @id @default(uuid())
+  orderId    String
+  menuItemId String?
+  name       String
+  quantity   Int             @default(1)
+  price      Float
+  total      Float
+  order      RestaurantOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem   MenuItem?       @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+}
+
+// ----------------------------------------------------
+// PROMOTIONS, PACKAGES & DYNAMIC PRICING
+// ----------------------------------------------------
+
+model Promotion {
+  id            String       @id @default(uuid())
+  code          String       @unique
+  description   String?
+  discountType  DiscountType @default(PERCENTAGE)
+  discountValue Float
+  minSpend      Float        @default(0)
+  maxDiscount   Float?
+  validFrom     DateTime?
+  validUntil    DateTime?
+  usageLimit    Int          @default(100)
+  usedCount     Int          @default(0)
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+}
+
+model RatePlan {
+  id                    String   @id @default(uuid())
+  roomTypeId            String
+  name                  String   // e.g. "Corporate Plan", "Breakfast Included"
+  baseSingleAdjustment  Float    @default(0)
+  baseDoubleAdjustment  Float    @default(0)
+  weekendAdjustment     Float    @default(0)
+  holidayAdjustment     Float    @default(0)
+  minNights             Int      @default(1)
+  cancellationPolicy    String?
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  roomType              Room     @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+
+  @@index([roomTypeId])
+}
+
+model SeasonalRate {
+  id                  String   @id @default(uuid())
+  roomTypeId          String
+  name                String   // e.g. "Durga Puja Rush", "Winter Wedding Season"
+  startDate           DateTime
+  endDate             DateTime
+  multiplier          Float    @default(1.0)
+  priceSingleOverride Float?
+  priceDoubleOverride Float?
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  roomType            Room     @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+
+  @@index([roomTypeId, startDate, endDate])
+}
+
+// ----------------------------------------------------
+// TRANSACTIONAL OUTBOX & CONCURRENCY SEQUENCES
+// ----------------------------------------------------
+
+model OutboxEvent {
+  id          String    @id @default(uuid())
+  eventType   String    // BOOKING_CONFIRMED, PAYMENT_SUCCESS, PAYMENT_FAILED, REFUND_COMPLETED, CHECK_IN, CHECK_OUT, BOOKING_CANCELLED, EMAIL_DISPATCH, SHEETS_SYNC
+  payload     Json
+  status      String    @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  retryCount  Int       @default(0)
+  maxRetries  Int       @default(5)
+  lastError   String?
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([status, createdAt])
+}
+
+model SystemSequence {
+  id         String   @id @default(uuid())
+  name       String   @unique // "BOOKING_REF", "INVOICE_NUM", "FOLIO_NUM", "ORDER_NUM"
+  currentVal Int      @default(1000)
+  prefix     String
+  updatedAt  DateTime @updatedAt
+}
+
+// ----------------------------------------------------
+// EXISTING CMS, REVIEWS, CONTACT, AUDIT
+// ----------------------------------------------------
 
 model GalleryImage {
   id           String   @id @default(uuid())
@@ -261,4 +1025,7 @@ model AuditLog {
   ipAddress String?
   createdAt DateTime @default(now())
   user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([entity, entityId])
+  @@index([createdAt])
 }

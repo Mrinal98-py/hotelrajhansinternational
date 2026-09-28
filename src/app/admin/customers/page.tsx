@@ -16,7 +16,7 @@ export default function AdminCustomersPage() {
     adminFetch(`/api/customers${query}`)
       .then((res) => res.json())
       .then((d) => {
-        if (d.success) setCustomers(d.customers);
+        if (d.success) setCustomers(d.data?.customers || d.customers || []);
       })
       .catch(console.error)
       .finally(() => setLoading(false));

@@ -2,11 +2,19 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 
 export const revalidate = 0;
 
-const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
-const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
+const MAX_DOC_BYTES = 10 * 1024 * 1024; // 10 MB
+
+const ALLOWED_MIME_TYPES: Record<string, string> = {
+  "image/jpeg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+  "application/pdf": ".pdf",
+};
 
 export async function POST(request: Request) {
   try {
@@ -17,43 +25,60 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const file = formData.get("file") as File;
+    const uploadCategory = (formData.get("category") as string) || "general"; // 'gallery', 'documents', 'cms'
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
-      return NextResponse.json({ error: "Only image uploads are allowed" }, { status: 400 });
-    }
-
-    if (file.size > MAX_UPLOAD_BYTES) {
-      return NextResponse.json({ error: "Image must be 5MB or smaller" }, { status: 400 });
-    }
-
-    if (process.env.VERCEL || process.env.NODE_ENV === "production") {
+    const ext = ALLOWED_MIME_TYPES[file.type];
+    if (!ext) {
       return NextResponse.json(
-        { error: "Persistent image uploads require configured object storage in production." },
-        { status: 501 }
+        { error: "Invalid file format. Allowed types: JPEG, PNG, WEBP, PDF." },
+        { status: 400 }
+      );
+    }
+
+    const isPdf = file.type === "application/pdf";
+    const maxBytes = isPdf ? MAX_DOC_BYTES : MAX_IMAGE_BYTES;
+
+    if (file.size > maxBytes) {
+      return NextResponse.json(
+        { error: `File exceeds maximum allowed size of ${isPdf ? "10MB" : "5MB"}` },
+        { status: 400 }
       );
     }
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const uploadsDir = path.join(process.cwd(), "public", "uploads");
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
+    // Subdirectory based on category
+    const subDir = uploadCategory === "documents" ? "documents" : "uploads";
+    const targetDir = path.join(process.cwd(), "public", subDir);
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
     }
 
-    const filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
-    const filePath = path.join(uploadsDir, filename);
+    // Secure random unique filename to prevent path traversal or overwrites
+    const randomHash = crypto.randomBytes(12).toString("hex");
+    const sanitizedBase = file.name
+      .replace(/[^a-zA-Z0-9]/g, "_")
+      .substring(0, 30);
+    const filename = `${Date.now()}_${sanitizedBase}_${randomHash}${ext}`;
+    const filePath = path.join(targetDir, filename);
 
     fs.writeFileSync(filePath, buffer);
 
-    const fileUrl = `/uploads/${filename}`;
-    return NextResponse.json({ success: true, url: fileUrl });
-  } catch (error) {
+    const fileUrl = `/${subDir}/${filename}`;
+    return NextResponse.json({
+      success: true,
+      url: fileUrl,
+      filename,
+      size: file.size,
+      mimeType: file.type,
+    });
+  } catch (error: any) {
     console.error("Upload API Error:", error);
-    return NextResponse.json({ error: "Failed to upload image" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to upload file" }, { status: 500 });
   }
 }

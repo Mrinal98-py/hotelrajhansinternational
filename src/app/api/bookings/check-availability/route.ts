@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { isDateOverlap } from "@/lib/utils";
+import { getAvailablePhysicalRooms } from "@/lib/inventory";
+import { calculateBookingPricing } from "@/lib/pricing";
 
 export const revalidate = 0;
 
 export async function POST(request: Request) {
   try {
-    const { roomId, roomType, checkIn, checkOut } = await request.json();
+    const { roomId, roomType, checkIn, checkOut, adults = 2, children = 0, couponCode } = await request.json();
 
     if ((!roomId && !roomType) || !checkIn || !checkOut) {
       return NextResponse.json(
@@ -15,7 +16,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Find room by ID or type
+    // Find room type by ID or type
     let room;
     if (roomId) {
       room = await prisma.room.findUnique({ where: { id: roomId } });
@@ -31,61 +32,57 @@ export async function POST(request: Request) {
     if (!room) {
       return NextResponse.json(
         { available: false, error: "Room category not found" },
-        { status: 444 }
+        { status: 404 }
       );
     }
 
-    if (room.status !== "AVAILABLE") {
+    if (room.status === "DEACTIVATED") {
       return NextResponse.json({
         available: false,
-        reason: `Room is currently in ${room.status.toLowerCase()} mode.`,
+        reason: "Selected room category is deactivated.",
       });
     }
 
-    // Check existing confirmed/checked-in bookings for date overlap
     const checkInDate = new Date(checkIn);
     const checkOutDate = new Date(checkOut);
 
-    const existingBookings = await prisma.booking.findMany({
-      where: {
-        roomId: room.id,
-        status: { in: ["CONFIRMED", "CHECKED_IN", "PENDING"] },
-      },
-    });
+    if (isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime()) || checkOutDate <= checkInDate) {
+      return NextResponse.json(
+        { available: false, error: "Invalid date range provided" },
+        { status: 400 }
+      );
+    }
 
-    const isOverlap = existingBookings.some((b) =>
-      isDateOverlap(checkInDate, checkOutDate, b.checkIn, b.checkOut)
-    );
+    // Real Physical Room Availability Check
+    const availableRooms = await getAvailablePhysicalRooms(room.id, checkInDate, checkOutDate);
 
-    if (isOverlap) {
+    if (availableRooms.length === 0) {
       return NextResponse.json({
         available: false,
-        reason: "Selected room is already booked for these dates.",
+        reason: "No physical rooms available in this category for the selected dates.",
+        availableCount: 0,
       });
     }
 
-    // Check maintenance / blocked dates
-    const blockedDates = await prisma.availability.findMany({
-      where: {
-        roomId: room.id,
-        status: { in: ["MAINTENANCE", "BLOCKED"] },
-      },
+    // Dynamic Pricing Calculation
+    const pricing = await calculateBookingPricing({
+      roomTypeId: room.id,
+      checkIn: checkInDate,
+      checkOut: checkOutDate,
+      adults: parseInt(adults, 10),
+      children: parseInt(children, 10),
+      couponCode,
     });
-
-    const hasBlockedDate = blockedDates.some((b) => {
-      const bDate = new Date(b.date);
-      return bDate >= checkInDate && bDate < checkOutDate;
-    });
-
-    if (hasBlockedDate) {
-      return NextResponse.json({
-        available: false,
-        reason: "Selected room is undergoing maintenance on these dates.",
-      });
-    }
 
     return NextResponse.json({
       available: true,
+      availableCount: availableRooms.length,
+      availableRooms: availableRooms.map((r) => ({
+        id: r.id,
+        roomNumber: r.roomNumber,
+        floor: r.floor,
+        housekeepingStatus: r.housekeepingStatus,
+      })),
       room: {
         id: room.id,
         name: room.name,
@@ -94,11 +91,21 @@ export async function POST(request: Request) {
         basePriceDouble: room.basePriceDouble,
         taxPercentage: room.taxPercentage,
       },
+      pricing: {
+        nights: pricing.nights,
+        ratePerNight: pricing.ratePerNight,
+        baseAmount: pricing.baseAmount,
+        discountAmount: pricing.discountAmount,
+        discountCode: pricing.discountCode,
+        taxAmount: pricing.taxAmount,
+        netAmount: pricing.netAmount,
+        breakdown: pricing.nightlyBreakdown,
+      },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Check Availability Error:", error);
     return NextResponse.json(
-      { available: false, error: "Internal server error" },
+      { available: false, error: error?.message || "Internal server error" },
       { status: 500 }
     );
   }

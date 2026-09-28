@@ -31,9 +31,9 @@ export default function AdminBookingsPage() {
       .then(async (res) => {
         const d = await res.json();
         if (res.ok && d.success) {
-          setBookings(d.bookings || []);
+          setBookings(d.data?.bookings || d.bookings || []);
         } else {
-          setErrorMessage(d.error || `HTTP ${res.status}: Failed to fetch reservations`);
+          setErrorMessage(d.error?.message || d.error || `HTTP ${res.status}: Failed to fetch reservations`);
         }
       })
       .catch((err) => {
@@ -60,10 +60,11 @@ export default function AdminBookingsPage() {
         body: JSON.stringify({ status: newStatus }),
       });
       const data = await res.json();
-      if (data.success && data.booking) {
-        setBookings((prev) => prev.map((b: any) => (b.id === id ? data.booking : b)));
+      const updated = data.data?.booking || data.booking;
+      if (data.success && updated) {
+        setBookings((prev) => prev.map((b: any) => (b.id === id ? updated : b)));
         if (selectedBooking && selectedBooking.id === id) {
-          setSelectedBooking(data.booking);
+          setSelectedBooking(updated);
         }
         fetchBookings();
       }
@@ -169,7 +170,16 @@ export default function AdminBookingsPage() {
                       <div className="font-bold text-slate-900">{b.customer?.name}</div>
                       <div className="text-[10px] text-slate-800 font-mono font-semibold">{b.customer?.phone}</div>
                     </td>
-                    <td className="py-3.5 px-4 font-semibold text-slate-900">{b.room?.name}</td>
+                    <td className="py-3.5 px-4 font-semibold text-slate-900">
+                      {b.roomAssignments?.[0]?.physicalRoom?.roomNumber ? (
+                        <div>
+                          <span className="font-bold text-slate-900">Room #{b.roomAssignments[0].physicalRoom.roomNumber}</span>
+                          <span className="text-[10px] text-slate-500 block">({b.room?.name})</span>
+                        </div>
+                      ) : (
+                        b.room?.name
+                      )}
+                    </td>
                     <td className="py-3.5 px-4 text-[11px] text-slate-900 font-mono font-semibold">
                       {new Date(b.checkIn).toLocaleDateString()} - {new Date(b.checkOut).toLocaleDateString()}
                     </td>

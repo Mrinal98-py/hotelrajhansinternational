@@ -5,14 +5,22 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
+  ConciergeBell,
   CalendarCheck,
+  Grid3X3,
   BedDouble,
-  Image as ImageIcon,
+  Sparkles,
+  Wrench,
+  Receipt,
+  Wallet,
+  UtensilsCrossed,
   Users,
   CreditCard,
+  Tag,
   BarChart3,
+  UserCheck,
+  ShieldAlert,
   Globe,
-  Star,
   MessageSquare,
   Settings,
   LogOut,
@@ -57,16 +65,51 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     router.refresh();
   };
 
-  const navItems = [
-    { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-    { label: "Bookings", href: "/admin/bookings", icon: CalendarCheck },
-    { label: "Rooms & Pricing", href: "/admin/rooms", icon: BedDouble },
-    { label: "Guests CRM", href: "/admin/customers", icon: Users },
-    { label: "Payments", href: "/admin/payments", icon: CreditCard },
-    { label: "Analytics & Reports", href: "/admin/reports", icon: BarChart3 },
-    { label: "CMS & Settings", href: "/admin/cms", icon: Globe },
-    { label: "Inquiries", href: "/admin/messages", icon: MessageSquare },
-    { label: "System Config", href: "/admin/settings", icon: Settings },
+  const navSections = [
+    {
+      title: "Front Desk & Stays",
+      items: [
+        { label: "Front Desk Operations", href: "/admin/front-desk", icon: ConciergeBell },
+        { label: "Bookings", href: "/admin/bookings", icon: CalendarCheck },
+        { label: "Room Inventory Grid", href: "/admin/inventory", icon: Grid3X3 },
+        { label: "Room Types & Rates", href: "/admin/rooms", icon: BedDouble },
+      ],
+    },
+    {
+      title: "Operations & Facilities",
+      items: [
+        { label: "Housekeeping", href: "/admin/housekeeping", icon: Sparkles },
+        { label: "Maintenance Tickets", href: "/admin/maintenance", icon: Wrench },
+        { label: "Restaurant & POS", href: "/admin/pos", icon: UtensilsCrossed },
+      ],
+    },
+    {
+      title: "Financials & Billing",
+      items: [
+        { label: "Guest Folios", href: "/admin/folios", icon: Receipt },
+        { label: "Cashier Shifts", href: "/admin/cashier", icon: Wallet },
+        { label: "Payments Audit", href: "/admin/payments", icon: CreditCard },
+      ],
+    },
+    {
+      title: "Management & CRM",
+      items: [
+        { label: "Executive Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+        { label: "Guests CRM & KYC", href: "/admin/customers", icon: Users },
+        { label: "Promotions & Rates", href: "/admin/promotions", icon: Tag },
+        { label: "Analytics & KPIs", href: "/admin/reports", icon: BarChart3 },
+        { label: "Staff & Attendance", href: "/admin/staff", icon: UserCheck },
+        { label: "Security & Audit Logs", href: "/admin/audit", icon: ShieldAlert },
+      ],
+    },
+    {
+      title: "System & Public CMS",
+      items: [
+        { label: "CMS & Web Content", href: "/admin/cms", icon: Globe },
+        { label: "Guest Inquiries", href: "/admin/messages", icon: MessageSquare },
+        { label: "System Settings", href: "/admin/settings", icon: Settings },
+      ],
+    },
   ];
 
   return (
@@ -76,18 +119,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        <div>
-          <div className="p-6 border-b border-slate-200 flex items-center justify-between">
-            <Link href="/admin/dashboard" className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-slate-100 text-slate-900 border border-slate-200">
-                <Hotel className="h-6 w-6 text-slate-900" />
+        <div className="flex flex-col h-full">
+          <div className="p-5 border-b border-slate-200 flex items-center justify-between shrink-0">
+            <Link href="/admin/front-desk" className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-amber-500 text-white shadow-sm">
+                <Hotel className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="font-serif text-lg font-bold uppercase tracking-wider leading-tight text-slate-900">
+                <h2 className="font-serif text-base font-bold uppercase tracking-wider leading-tight text-slate-900">
                   Rajhans
                 </h2>
-                <p className="text-[9px] uppercase tracking-widest font-mono text-slate-800 font-bold">
-                  Hotel HMS Admin
+                <p className="text-[9px] uppercase tracking-widest font-mono text-amber-700 font-bold">
+                  HMS Enterprise
                 </p>
               </div>
             </Link>
@@ -99,52 +142,59 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </button>
           </div>
 
-          <nav className="p-4 space-y-1.5 max-h-[calc(100vh-180px)] overflow-y-auto">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href;
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setIsSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs uppercase tracking-wider font-bold transition-all ${
-                    isActive
-                      ? "bg-slate-900 text-white shadow-sm"
-                      : "text-slate-800 hover:bg-slate-100 hover:text-slate-900"
-                  }`}
-                >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
+          <nav className="p-3 space-y-4 overflow-y-auto flex-1 text-xs">
+            {navSections.map((section, sIdx) => (
+              <div key={sIdx} className="space-y-1">
+                <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-700 font-mono">
+                  {section.title}
+                </p>
+                {section.items.map((item) => {
+                  const isActive = pathname === item.href;
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setIsSidebarOpen(false)}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                        isActive
+                          ? "bg-slate-900 text-white shadow-sm"
+                          : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                      }`}
+                    >
+                      <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-amber-400" : "text-slate-700"}`} />
+                      <span className="truncate">{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            ))}
           </nav>
-        </div>
 
-        <div className="p-4 border-t border-slate-200 space-y-3">
-          {user && (
-            <div className="flex items-center gap-3 px-2">
-              <div className="h-9 w-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-900 font-bold text-xs uppercase">
-                {user.name ? user.name[0] : "A"}
+          <div className="p-4 border-t border-slate-200 space-y-3 shrink-0 bg-slate-50/50">
+            {user && (
+              <div className="flex items-center gap-2.5 px-1">
+                <div className="h-8 w-8 rounded-full bg-slate-900 text-amber-400 flex items-center justify-center font-bold text-xs uppercase shadow-xs">
+                  {user.name ? user.name[0] : "A"}
+                </div>
+                <div className="overflow-hidden">
+                  <p className="text-xs font-bold truncate text-slate-900">{user.name}</p>
+                  <span className="inline-block text-[9px] uppercase tracking-wider font-mono text-amber-700 font-bold">
+                    {user.role}
+                  </span>
+                </div>
               </div>
-              <div className="overflow-hidden">
-                <p className="text-xs font-bold truncate text-slate-900">{user.name}</p>
-                <span className="inline-block text-[9px] uppercase tracking-wider font-mono text-slate-800 font-bold">
-                  {user.role}
-                </span>
-              </div>
-            </div>
-          )}
+            )}
 
-          <button
-            onClick={handleLogout}
-            className="w-full py-2 px-3 rounded-lg border border-red-300 text-red-700 hover:bg-red-50 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-            title="Logout"
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            Logout
-          </button>
+            <button
+              onClick={handleLogout}
+              className="w-full py-2 px-3 rounded-lg border border-red-200 bg-white text-red-700 hover:bg-red-50 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+              title="Logout"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              Logout Session
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -162,19 +212,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </h1>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/admin/front-desk"
+              className="text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors shadow-xs"
+            >
+              <ConciergeBell className="h-3.5 w-3.5" /> Front Desk
+            </Link>
             <a
               href="/"
               target="_blank"
               rel="noreferrer"
-              className="text-xs uppercase font-extrabold tracking-widest border border-slate-300 text-slate-900 px-3.5 py-1.5 rounded-full flex items-center gap-1.5 transition-colors hover:bg-slate-100"
+              className="text-xs font-bold border border-slate-300 text-slate-700 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors hover:bg-slate-100"
             >
-              <Globe className="h-3.5 w-3.5 text-slate-900" /> View Public Site
+              <Globe className="h-3.5 w-3.5 text-slate-500" /> View Website
             </a>
           </div>
         </header>
 
-        <main className="p-6 md:p-8 flex-1 bg-slate-50">{children}</main>
+        <main className="p-4 md:p-6 lg:p-8 flex-1 bg-slate-50">{children}</main>
       </div>
     </div>
   );

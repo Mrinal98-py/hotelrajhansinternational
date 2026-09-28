@@ -28,7 +28,7 @@ async function main() {
   // 3. Seed Rooms & Pricing
   const roomData = [
     {
-      name: "Executive Room",
+      name: "AC Executive",
       slug: "executive-room",
       type: "EXECUTIVE" as const,
       description: "Good for solo travellers and short business trips with dedicated work area.",
@@ -47,7 +47,7 @@ async function main() {
       ],
     },
     {
-      name: "Deluxe Room",
+      name: "AC Deluxe",
       slug: "deluxe-room",
       type: "DELUXE" as const,
       description: "More space and a pocket-spring bed designed for family and business comfort.",

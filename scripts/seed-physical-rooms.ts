@@ -14,32 +14,64 @@ async function main() {
   const suiteId = roomMap.get("ROYAL_SUITE");
   const dormId = roomMap.get("DORMITORY");
 
-  // 2. Physical Rooms Setup
+  // 2. Physical Rooms Setup (Exact 33 physical rooms)
   const physicalRoomDefs = [
-    // Executive Rooms (Floor 1)
+    // AC EXECUTIVE (18 rooms)
+    // Floor 1 (4)
     { roomNumber: "101", floor: 1, roomTypeId: execId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
-    { roomNumber: "102", floor: 1, roomTypeId: execId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
     { roomNumber: "103", floor: 1, roomTypeId: execId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
     { roomNumber: "104", floor: 1, roomTypeId: execId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
     { roomNumber: "105", floor: 1, roomTypeId: execId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
-    { roomNumber: "106", floor: 1, roomTypeId: execId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
+    // Floor 2 (10)
+    { roomNumber: "201", floor: 2, roomTypeId: execId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
+    { roomNumber: "203", floor: 2, roomTypeId: execId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
+    { roomNumber: "204", floor: 2, roomTypeId: execId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
+    { roomNumber: "205", floor: 2, roomTypeId: execId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
+    { roomNumber: "211", floor: 2, roomTypeId: execId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
+    { roomNumber: "212", floor: 2, roomTypeId: execId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
+    { roomNumber: "214", floor: 2, roomTypeId: execId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
+    { roomNumber: "215", floor: 2, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const, roomTypeId: execId! },
+    { roomNumber: "216", floor: 2, roomTypeId: execId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
+    { roomNumber: "217", floor: 2, roomTypeId: execId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
+    // Floor 3 (4)
+    { roomNumber: "301", floor: 3, roomTypeId: execId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
+    { roomNumber: "303", floor: 3, roomTypeId: execId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
+    { roomNumber: "304", floor: 3, roomTypeId: execId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
+    { roomNumber: "305", floor: 3, roomTypeId: execId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
 
-    // Deluxe Rooms (Floor 2)
-    { roomNumber: "201", floor: 2, roomTypeId: deluxeId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
-    { roomNumber: "202", floor: 2, roomTypeId: deluxeId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
-    { roomNumber: "203", floor: 2, roomTypeId: deluxeId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
-    { roomNumber: "204", floor: 2, roomTypeId: deluxeId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
-    { roomNumber: "205", floor: 2, roomTypeId: deluxeId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
+    // AC DELUXE (12 rooms)
+    // Floor 1 (4)
+    { roomNumber: "106", floor: 1, roomTypeId: deluxeId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
+    { roomNumber: "107", floor: 1, roomTypeId: deluxeId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
+    { roomNumber: "108", floor: 1, roomTypeId: deluxeId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
+    { roomNumber: "109", floor: 1, roomTypeId: deluxeId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
+    // Floor 2 (4)
     { roomNumber: "206", floor: 2, roomTypeId: deluxeId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
+    { roomNumber: "207", floor: 2, roomTypeId: deluxeId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
+    { roomNumber: "208", floor: 2, roomTypeId: deluxeId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
+    { roomNumber: "209", floor: 2, roomTypeId: deluxeId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
+    // Floor 3 (4)
+    { roomNumber: "306", floor: 3, roomTypeId: deluxeId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
+    { roomNumber: "307", floor: 3, roomTypeId: deluxeId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
+    { roomNumber: "308", floor: 3, roomTypeId: deluxeId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
+    { roomNumber: "309", floor: 3, roomTypeId: deluxeId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
 
-    // Royal Suites (Floor 3)
-    { roomNumber: "301", floor: 3, roomTypeId: suiteId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
+    // ROYAL SUITE (3 rooms)
+    // Floor 1 (1)
+    { roomNumber: "102", floor: 1, roomTypeId: suiteId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
+    // Floor 2 (1)
+    { roomNumber: "202", floor: 2, roomTypeId: suiteId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
+    // Floor 3 (1)
     { roomNumber: "302", floor: 3, roomTypeId: suiteId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
-    { roomNumber: "303", floor: 3, roomTypeId: suiteId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
-
-    // Dormitory Hall (Floor 4)
-    { roomNumber: "401", floor: 4, roomTypeId: dormId!, status: "AVAILABLE" as const, housekeepingStatus: "READY" as const },
   ];
+
+  const allowedRoomNumbers = new Set(physicalRoomDefs.map((r) => r.roomNumber));
+  const currentRooms = await prisma.physicalRoom.findMany();
+  for (const r of currentRooms) {
+    if (!allowedRoomNumbers.has(r.roomNumber)) {
+      await prisma.physicalRoom.delete({ where: { id: r.id } });
+    }
+  }
 
   for (const def of physicalRoomDefs) {
     if (!def.roomTypeId) continue;
@@ -48,6 +80,7 @@ async function main() {
       update: {
         floor: def.floor,
         roomTypeId: def.roomTypeId,
+        isActive: true,
       },
       create: {
         roomNumber: def.roomNumber,
@@ -55,6 +88,7 @@ async function main() {
         roomTypeId: def.roomTypeId,
         status: def.status,
         housekeepingStatus: def.housekeepingStatus,
+        isActive: true,
       },
     });
   }

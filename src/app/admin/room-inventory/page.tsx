@@ -437,10 +437,9 @@ export default function AdminRoomInventoryCalendarPage() {
             className="text-xs font-semibold px-3 py-1.5 border border-slate-300 rounded-xl bg-white focus:ring-2 focus:ring-slate-900"
           >
             <option value="ALL">All Categories</option>
-            <option value="DELUXE">Deluxe</option>
-            <option value="EXECUTIVE">Executive</option>
+            <option value="EXECUTIVE">AC Executive</option>
+            <option value="DELUXE">AC Deluxe</option>
             <option value="ROYAL_SUITE">Royal Suite</option>
-            <option value="DORMITORY">Dormitory</option>
           </select>
         </div>
       </div>

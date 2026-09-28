@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      DATABASE_URL: "file:./dev.db"
+      DATABASE_URL: "postgresql://neondb_owner:npg_J1i6YyUImWaC@ep-nameless-firefly-ayv71j3q.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require"
       JWT_SECRET: "ci-validation-jwt-secret-key-32-chars-long"
       NEXTAUTH_SECRET: "ci-validation-jwt-secret-key-32-chars-long"
 

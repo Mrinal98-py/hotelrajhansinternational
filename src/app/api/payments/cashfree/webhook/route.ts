@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyCashfreeWebhookSignature } from "@/lib/cashfree";
-import { sendEmailNotification } from "@/lib/mailer";
-import { generateConfirmationEmailHTML } from "@/lib/invoice";
-import { syncBookingToGoogleSheet } from "@/lib/googlesheets";
+import { confirmBookingPayment, dispatchPostPaymentNotifications } from "@/lib/payment-confirm";
 
 export const revalidate = 0;
 
@@ -74,105 +72,29 @@ export async function POST(request: Request) {
       paymentStatus === "SUCCESS" ||
       orderData.order_status === "PAID"
     ) {
-      await prisma.$transaction([
-        prisma.payment.update({
-          where: { id: paymentRecord.id },
-          data: {
-            cashfreePaymentId: String(paymentId || `cf_pay_${Date.now()}`),
-            status: "SUCCESS",
-            gatewayResponse: rawBody,
-          },
-        }),
-        prisma.booking.update({
-          where: { id: booking.id },
-          data: {
-            status: "CONFIRMED",
-            paidAmount: booking.netAmount,
-          },
-        }),
-      ]);
+      const paymentMethod = paymentData?.payment_method
+        ? Object.keys(paymentData.payment_method)[0]?.toUpperCase()
+        : "WEBHOOK";
 
-      // Non-blocking Email Notification (Guest + Hotel Official Admin Inbox)
-      try {
-        const emailHtml = generateConfirmationEmailHTML({
-          bookingReference: booking.referenceId,
-          customerName: booking.customer.name,
-          customerPhone: booking.customer.phone,
-          customerEmail: booking.customer.email || "N/A",
-          customerAddress: booking.customer.address,
-          roomName: booking.room.name,
-          checkIn: booking.checkIn,
-          checkOut: booking.checkOut,
-          guestsCount: booking.guestsCount,
-          roomsCount: 1,
-          basePrice: booking.room.basePriceDouble,
-          totalAmount: booking.totalAmount,
-          taxAmount: booking.taxAmount,
-          discountAmount: booking.discountAmount,
-          netAmount: booking.netAmount,
-          paidAmount: booking.netAmount,
-          paymentStatus: "SUCCESS",
-          paymentMethod: "Cashfree Webhook Verified",
-          gstin: "10AAAAA0000A1Z5",
-          createdAt: new Date(),
-          hotelAddress: "Kachari Chowk, MG Road, Bhagalpur, Bihar - 812001",
-          hotelPhone: "+91 93081 89201 / +91 641 2400000",
-          googleMapsUrl: "https://maps.app.goo.gl/77AAPZ7hRje8Nrmk9",
-          railwayDistance: "Bhagalpur Junction Railway Station (BGP): ~2.5 km (10-15 mins drive)",
-        });
+      await confirmBookingPayment({
+        bookingId: booking.id,
+        orderId,
+        paymentId: String(paymentId || `cf_pay_${Date.now()}`),
+        amount: booking.netAmount,
+        paymentMethod,
+        gatewayResponse: rawBody,
+      });
 
-        const recipientEmails = Array.from(
-          new Set([
-            booking.customer.email,
-            "info@hotelrajhansinternational.com",
-            "rajhansinternational.info@gmail.com",
-          ].filter(Boolean))
-        ).join(", ");
+      // Non-blocking notifications (email + Google Sheets)
+      dispatchPostPaymentNotifications(booking.id);
 
-        sendEmailNotification({
-          to: recipientEmails,
-          subject: `New Confirmed Booking (${booking.referenceId}) - Hotel Rajhans International`,
-          html: emailHtml,
-        }).catch((err) => console.error("Webhook email notification error:", err));
-
-        prisma.auditLog
-          .create({
-            data: {
-              userId: null,
-              userName: "System (Cashfree Webhook)",
-              action: "SEND_CONFIRMATION_EMAIL",
-              entity: "Booking",
-              entityId: booking.id,
-              details: `Webhook confirmation email dispatched to ${recipientEmails}`,
-            },
-          })
-          .catch(() => {});
-      } catch (mailErr) {
-        console.error("Webhook email formatting error:", mailErr);
-      }
-
-      // Non-blocking Google Sheets Synchronization
-      try {
-        syncBookingToGoogleSheet({
-          bookingReference: booking.referenceId,
-          bookingDate: booking.createdAt,
-          customerName: booking.customer.name,
-          phone: booking.customer.phone,
-          email: booking.customer.email,
-          roomName: booking.room.name,
-          checkIn: booking.checkIn,
-          checkOut: booking.checkOut,
-          guestsCount: booking.guestsCount,
-          netAmount: booking.netAmount,
-          paymentStatus: "SUCCESS",
-          bookingStatus: "CONFIRMED",
-        }).catch((err) => console.error("Webhook Google Sheets sync error:", err));
-      } catch (sheetErr) {
-        console.error("Webhook Google Sheets payload error:", sheetErr);
-      }
+      return NextResponse.json(
+        { status: "SUCCESS", message: "Webhook processed and booking confirmed" },
+        { status: 200 }
+      );
     }
 
-    return NextResponse.json({ status: "OK" }, { status: 200 });
+    return NextResponse.json({ status: "OK", message: "Event ignored or unhandled" }, { status: 200 });
   } catch (error) {
     console.error("Cashfree Webhook Exception:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

@@ -27,6 +27,30 @@ import {
 import { adminFetch } from "@/lib/admin-fetch";
 import { Parser } from "json2csv";
 
+const MONTHS = [
+  { value: 0, label: "January" },
+  { value: 1, label: "February" },
+  { value: 2, label: "March" },
+  { value: 3, label: "April" },
+  { value: 4, label: "May" },
+  { value: 5, label: "June" },
+  { value: 6, label: "July" },
+  { value: 7, label: "August" },
+  { value: 8, label: "September" },
+  { value: 9, label: "October" },
+  { value: 10, label: "November" },
+  { value: 11, label: "December" },
+];
+
+const YEARS = [2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032];
+
+function formatDateToLocalYMD(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 export default function AdminRoomInventoryCalendarPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -72,12 +96,12 @@ export default function AdminRoomInventoryCalendarPage() {
 
   // Compute Start and End Dates based on baseDate and viewDays
   const startDateStr = useMemo(() => {
-    return baseDate.toISOString().split("T")[0];
+    return formatDateToLocalYMD(baseDate);
   }, [baseDate]);
 
   const endDateStr = useMemo(() => {
-    const e = new Date(baseDate.getTime() + (viewDays - 1) * 86400000);
-    return e.toISOString().split("T")[0];
+    const e = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate() + viewDays - 1);
+    return formatDateToLocalYMD(e);
   }, [baseDate, viewDays]);
 
   // Load Inventory Calendar Data
@@ -120,14 +144,14 @@ export default function AdminRoomInventoryCalendarPage() {
 
   // Navigation handlers
   const handlePrev = () => {
-    const d = new Date(baseDate);
-    d.setDate(d.getDate() - viewDays);
+    const d = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate() - viewDays);
+    d.setHours(0, 0, 0, 0);
     setBaseDate(d);
   };
 
   const handleNext = () => {
-    const d = new Date(baseDate);
-    d.setDate(d.getDate() + viewDays);
+    const d = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate() + viewDays);
+    d.setHours(0, 0, 0, 0);
     setBaseDate(d);
   };
 
@@ -137,14 +161,34 @@ export default function AdminRoomInventoryCalendarPage() {
     setBaseDate(d);
   };
 
+  const handleMonthChange = (monthIndex: number) => {
+    const d = new Date(baseDate.getFullYear(), monthIndex, 1);
+    d.setHours(0, 0, 0, 0);
+    setBaseDate(d);
+  };
+
+  const handleYearChange = (year: number) => {
+    const d = new Date(year, baseDate.getMonth(), 1);
+    d.setHours(0, 0, 0, 0);
+    setBaseDate(d);
+  };
+
+  const handleDateSelect = (val: string) => {
+    if (!val) return;
+    const [y, m, day] = val.split("-").map(Number);
+    const newDate = new Date(y, m - 1, day);
+    newDate.setHours(0, 0, 0, 0);
+    setBaseDate(newDate);
+  };
+
   // Date columns generator
   const dateColumns = useMemo(() => {
     const cols: { dateStr: string; dayOfWeek: string; formatted: string; isToday: boolean }[] = [];
-    const todayStr = new Date().toISOString().split("T")[0];
+    const todayStr = formatDateToLocalYMD(new Date());
 
     for (let i = 0; i < viewDays; i++) {
-      const d = new Date(baseDate.getTime() + i * 86400000);
-      const str = d.toISOString().split("T")[0];
+      const d = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate() + i);
+      const str = formatDateToLocalYMD(d);
       cols.push({
         dateStr: str,
         dayOfWeek: d.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase(),
@@ -373,30 +417,79 @@ export default function AdminRoomInventoryCalendarPage() {
 
       {/* 3. Navigation Bar & Period Switcher */}
       <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-white border border-slate-200 rounded-2xl shadow-sm">
-        {/* Date Stepper */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handlePrev}
-            className="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 cursor-pointer"
-            title="Previous Period"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <button
-            onClick={handleToday}
-            className="px-3.5 py-1.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 hover:bg-slate-100 cursor-pointer"
-          >
-            Today
-          </button>
-          <button
-            onClick={handleNext}
-            className="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 cursor-pointer"
-            title="Next Period"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
+        {/* Date Stepper & Month / Year Jump */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Stepper Buttons */}
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+            <button
+              onClick={handlePrev}
+              className="p-1.5 rounded-lg hover:bg-white text-slate-700 transition-colors cursor-pointer"
+              title="Previous Period"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              onClick={handleToday}
+              className="px-2.5 py-1 rounded-lg text-xs font-bold text-slate-900 hover:bg-white transition-colors cursor-pointer"
+            >
+              Today
+            </button>
+            <button
+              onClick={handleNext}
+              className="p-1.5 rounded-lg hover:bg-white text-slate-700 transition-colors cursor-pointer"
+              title="Next Period"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
 
-          <span className="font-bold text-xs text-slate-800 ml-2 font-mono">
+          {/* Month Dropdown */}
+          <div className="flex items-center gap-1.5">
+            <div className="relative">
+              <select
+                value={baseDate.getMonth()}
+                onChange={(e) => handleMonthChange(Number(e.target.value))}
+                className="text-xs font-bold px-3 py-1.5 border border-slate-300 rounded-xl bg-white text-slate-900 shadow-xs focus:ring-2 focus:ring-slate-900 cursor-pointer"
+                title="Select Month"
+              >
+                {MONTHS.map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Year Dropdown */}
+            <div className="relative">
+              <select
+                value={baseDate.getFullYear()}
+                onChange={(e) => handleYearChange(Number(e.target.value))}
+                className="text-xs font-bold px-2.5 py-1.5 border border-slate-300 rounded-xl bg-white text-slate-900 shadow-xs focus:ring-2 focus:ring-slate-900 cursor-pointer"
+                title="Select Year"
+              >
+                {YEARS.map((yr) => (
+                  <option key={yr} value={yr}>
+                    {yr}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Specific Date Picker Input */}
+            <div className="flex items-center gap-1 border border-slate-300 rounded-xl px-2 py-1 bg-white shadow-xs">
+              <Calendar className="h-3.5 w-3.5 text-slate-500" />
+              <input
+                type="date"
+                value={startDateStr}
+                onChange={(e) => handleDateSelect(e.target.value)}
+                className="text-xs font-semibold text-slate-900 bg-transparent focus:outline-none cursor-pointer w-28"
+                title="Pick exact start date"
+              />
+            </div>
+          </div>
+
+          <span className="font-bold text-xs text-slate-800 ml-1 font-mono bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-200">
             {startDateStr} → {endDateStr}
           </span>
         </div>

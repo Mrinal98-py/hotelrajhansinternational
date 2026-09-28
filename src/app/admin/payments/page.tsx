@@ -7,17 +7,23 @@ import { adminFetch } from "@/lib/admin-fetch";
 export default function AdminPaymentsPage() {
   const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const fetchPayments = () => {
     setLoading(true);
+    setErrorMessage(null);
     adminFetch("/api/payments")
-      .then((res) => res.json())
-      .then((d) => {
-        if (d.success && d.payments) {
+      .then(async (res) => {
+        const d = await res.json();
+        if (res.ok && d.success && d.payments) {
           setPayments(d.payments);
+        } else {
+          setErrorMessage(d.error || `HTTP ${res.status}: Failed to fetch payments`);
         }
       })
-      .catch(console.error)
+      .catch((err) => {
+        setErrorMessage(err.message || "Network error loading payments");
+      })
       .finally(() => setLoading(false));
   };
 
@@ -83,6 +89,19 @@ export default function AdminPaymentsPage() {
           </button>
         </div>
       </div>
+
+      {/* Error Banner */}
+      {errorMessage && (
+        <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center justify-between">
+          <span>{errorMessage}</span>
+          <button
+            onClick={fetchPayments}
+            className="px-3 py-1 bg-red-600 text-white rounded-lg text-[11px] font-bold hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-2xl overflow-hidden">
         <div className="overflow-x-auto">

@@ -18,19 +18,27 @@ export default function AdminBookingsPage() {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [updating, setUpdating] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const fetchBookings = () => {
     setLoading(true);
+    setErrorMessage(null);
     const query = new URLSearchParams();
     if (statusFilter !== "ALL") query.set("status", statusFilter);
     if (search) query.set("search", search);
 
     adminFetch(`/api/bookings?${query.toString()}`)
-      .then((res) => res.json())
-      .then((d) => {
-        if (d.success) setBookings(d.bookings);
+      .then(async (res) => {
+        const d = await res.json();
+        if (res.ok && d.success) {
+          setBookings(d.bookings || []);
+        } else {
+          setErrorMessage(d.error || `HTTP ${res.status}: Failed to fetch reservations`);
+        }
       })
-      .catch(console.error)
+      .catch((err) => {
+        setErrorMessage(err.message || "Network error loading reservations");
+      })
       .finally(() => setLoading(false));
   };
 
@@ -115,6 +123,19 @@ export default function AdminBookingsPage() {
           ))}
         </div>
       </div>
+
+      {/* Error Banner */}
+      {errorMessage && (
+        <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center justify-between">
+          <span>{errorMessage}</span>
+          <button
+            onClick={fetchBookings}
+            className="px-3 py-1 bg-red-600 text-white rounded-lg text-[11px] font-bold hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Bookings Data Table */}
       <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">

@@ -50,6 +50,52 @@ const heroSlides = [
   },
 ];
 
+const defaultReviews = [
+  {
+    id: "rev-1",
+    authorName: "Mrinal Raj",
+    authorInitials: "MR",
+    rating: 5,
+    reviewText: "Very well maintained. Support staff was extremely friendly. Even though it is located in the middle of the city, the hotel is peaceful and exceptionally maintained. The food is excellent, and cleanliness and guest service are outstanding.",
+    source: "Google review",
+  },
+  {
+    id: "rev-2",
+    authorName: "Rituraj Rathore",
+    authorInitials: "RR",
+    rating: 5,
+    reviewText: "I stayed for two days. The ambience was wonderful, the staff were courteous, the rooms were clean, and the food was delicious. The tea served in an earthen pot was especially memorable.",
+    source: "Google review",
+  },
+];
+
+const defaultFaqs = [
+  {
+    question: "Food & dining",
+    answer: "Takshshila Restaurant serves Indian, Chinese, and continental dishes. Room service runs 24 hours. Ice & Spice is the in-house ice cream parlour.",
+  },
+  {
+    question: "Parking",
+    answer: "Free parking on-site, monitored around the clock.",
+  },
+  {
+    question: "Railway station pickup",
+    answer: "Pickup and drop can be arranged on request. Bhagalpur Railway Station is about 1.5 km away.",
+  },
+  {
+    question: "Location",
+    answer: "Kachari Chowk, MG Road — near markets, district courts, banks, and government offices.",
+  },
+  {
+    question: "Pets",
+    answer: "Pets are not allowed. Call ahead if you are travelling with a service animal.",
+  },
+  {
+    question: "WiFi & business needs",
+    answer: "WiFi in all rooms. Printing and scanning available at the front desk.",
+  },
+];
+
 const todayIso = new Date().toISOString().split("T")[0];
 const tomorrowIso = new Date(Date.now() + 86400000).toISOString().split("T")[0];
 
@@ -61,9 +107,9 @@ export default function Home() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Dynamic DB Data state with fallbacks
+  // Dynamic DB Data state with fallbacks matching database baseline
   const [roomRates, setRoomRates] = useState<Record<string, { single: number; double: number }>>({
-    executive: { single: 3090, double: 3790 },
+    executive: { single: 3790, double: 4490 },
     deluxe: { single: 3790, double: 4490 },
     royal: { single: 5190, double: 5190 },
     dormitory: { single: 800, double: 800 },
@@ -77,6 +123,8 @@ export default function Home() {
   });
 
   const [cmsSettings, setCmsSettings] = useState<Record<string, string>>({});
+  const [reviewsList, setReviewsList] = useState<any[]>(defaultReviews);
+  const [faqsList, setFaqsList] = useState<any[]>(defaultFaqs);
 
   // Quick contact form states
   const [contactForm, setContactForm] = useState({ name: "", email: "", message: "" });
@@ -105,8 +153,10 @@ export default function Home() {
       fetch("/api/cms", { cache: "no-store", headers: { "Cache-Control": "no-cache" } })
         .then((res) => res.json())
         .then((d) => {
-          if (d.success && d.settings) {
-            setCmsSettings(d.settings);
+          if (d.success) {
+            if (d.settings) setCmsSettings(d.settings);
+            if (d.faqs && Array.isArray(d.faqs) && d.faqs.length > 0) setFaqsList(d.faqs);
+            if (d.reviews && Array.isArray(d.reviews) && d.reviews.length > 0) setReviewsList(d.reviews);
           }
         })
         .catch(console.error);
@@ -183,32 +233,7 @@ export default function Home() {
     }
   };
 
-  const faqs = [
-    {
-      question: "Food & dining",
-      answer: "Takshshila Restaurant serves Indian, Chinese, and continental dishes. Room service runs 24 hours. Ice & Spice is the in-house ice cream parlour.",
-    },
-    {
-      question: "Parking",
-      answer: "Free parking on-site, monitored around the clock.",
-    },
-    {
-      question: "Railway station pickup",
-      answer: "Pickup and drop can be arranged on request. Bhagalpur Railway Station is about 1.5 km away.",
-    },
-    {
-      question: "Location",
-      answer: "Kachari Chowk, MG Road — near markets, district courts, banks, and government offices.",
-    },
-    {
-      question: "Pets",
-      answer: "Pets are not allowed. Call ahead if you are travelling with a service animal.",
-    },
-    {
-      question: "WiFi & business needs",
-      answer: "WiFi in all rooms. Printing and scanning available at the front desk.",
-    },
-  ];
+
 
   return (
     <>
@@ -557,10 +582,25 @@ export default function Home() {
 
               <div className="p-6 flex-grow flex flex-col justify-between space-y-6">
                 <div className="space-y-3">
-                  <div className="flex justify-between items-baseline">
-                    <h3 className="font-serif text-xl md:text-2xl text-gold-50 font-medium tracking-wide">
-                      Executive Room
-                    </h3>
+                  <div className="flex justify-between items-baseline gap-2">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-serif text-xl md:text-2xl text-gold-50 font-medium tracking-wide">
+                        Executive Room
+                      </h3>
+                      {roomStatuses.executive && (
+                        <span
+                          className={`text-[9px] uppercase tracking-wider px-2 py-0.5 rounded font-mono font-semibold border ${
+                            roomStatuses.executive === "AVAILABLE"
+                              ? "bg-emerald-950/60 text-emerald-300 border-emerald-500/30"
+                              : roomStatuses.executive === "OCCUPIED"
+                              ? "bg-red-950/60 text-red-300 border-red-500/30"
+                              : "bg-amber-950/60 text-amber-300 border-amber-500/30"
+                          }`}
+                        >
+                          {roomStatuses.executive}
+                        </span>
+                      )}
+                    </div>
                     <div className="text-right">
                       <p className="text-gold-300 font-sans text-lg font-semibold">
                         ₹{roomRates.executive.single.toLocaleString()} <span className="text-[10px] text-gold-200/50 font-sans font-normal">/ Single</span>
@@ -613,10 +653,25 @@ export default function Home() {
 
               <div className="p-6 flex-grow flex flex-col justify-between space-y-6">
                 <div className="space-y-3">
-                  <div className="flex justify-between items-baseline">
-                    <h3 className="font-serif text-xl md:text-2xl text-gold-50 font-medium tracking-wide">
-                      Deluxe Room
-                    </h3>
+                  <div className="flex justify-between items-baseline gap-2">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-serif text-xl md:text-2xl text-gold-50 font-medium tracking-wide">
+                        Deluxe Room
+                      </h3>
+                      {roomStatuses.deluxe && (
+                        <span
+                          className={`text-[9px] uppercase tracking-wider px-2 py-0.5 rounded font-mono font-semibold border ${
+                            roomStatuses.deluxe === "AVAILABLE"
+                              ? "bg-emerald-950/60 text-emerald-300 border-emerald-500/30"
+                              : roomStatuses.deluxe === "OCCUPIED"
+                              ? "bg-red-950/60 text-red-300 border-red-500/30"
+                              : "bg-amber-950/60 text-amber-300 border-amber-500/30"
+                          }`}
+                        >
+                          {roomStatuses.deluxe}
+                        </span>
+                      )}
+                    </div>
                     <div className="text-right">
                       <p className="text-gold-300 font-sans text-lg font-semibold">
                         ₹{roomRates.deluxe.single.toLocaleString()} <span className="text-[10px] text-gold-200/50 font-sans font-normal">/ Single</span>
@@ -669,10 +724,25 @@ export default function Home() {
 
               <div className="p-6 flex-grow flex flex-col justify-between space-y-6">
                 <div className="space-y-3">
-                  <div className="flex justify-between items-baseline">
-                    <h3 className="font-serif text-xl md:text-2xl text-gold-50 font-medium tracking-wide">
-                      Royal Suite
-                    </h3>
+                  <div className="flex justify-between items-baseline gap-2">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-serif text-xl md:text-2xl text-gold-50 font-medium tracking-wide">
+                        Royal Suite
+                      </h3>
+                      {roomStatuses.royal && (
+                        <span
+                          className={`text-[9px] uppercase tracking-wider px-2 py-0.5 rounded font-mono font-semibold border ${
+                            roomStatuses.royal === "AVAILABLE"
+                              ? "bg-emerald-950/60 text-emerald-300 border-emerald-500/30"
+                              : roomStatuses.royal === "OCCUPIED"
+                              ? "bg-red-950/60 text-red-300 border-red-500/30"
+                              : "bg-amber-950/60 text-amber-300 border-amber-500/30"
+                          }`}
+                        >
+                          {roomStatuses.royal}
+                        </span>
+                      )}
+                    </div>
                     <div className="text-right">
                       <p className="text-gold-300 font-sans text-xl font-semibold">
                         ₹{roomRates.royal.single.toLocaleString()} <span className="text-[10px] text-gold-200/50 font-sans font-normal">/ Suite</span>
@@ -898,57 +968,37 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
-            {/* Review 1 */}
-            <div className="glass-card rounded-lg p-8 relative flex flex-col justify-between space-y-6">
-              <Quote className="absolute top-6 right-8 h-12 w-12 text-gold-400/5 pointer-events-none" />
-              <div className="space-y-4">
-                <div className="flex gap-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-gold-400 text-gold-400" />
-                  ))}
+            {reviewsList.map((rev, idx) => (
+              <div
+                key={rev.id || idx}
+                className="glass-card rounded-lg p-8 relative flex flex-col justify-between space-y-6"
+              >
+                <Quote className="absolute top-6 right-8 h-12 w-12 text-gold-400/5 pointer-events-none" />
+                <div className="space-y-4">
+                  <div className="flex gap-1">
+                    {[...Array(rev.rating || 5)].map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-gold-400 text-gold-400" />
+                    ))}
+                  </div>
+                  <p className="text-gold-100/90 font-normal text-base leading-relaxed italic">
+                    &ldquo;{rev.reviewText}&rdquo;
+                  </p>
                 </div>
-                <p className="text-gold-100/90 font-normal text-base leading-relaxed italic">
-                  &ldquo;Very well maintained. Support staff was extremely friendly. Even though it is located in the middle of the city, the hotel is peaceful and exceptionally maintained. The food is excellent, and cleanliness and guest service are outstanding.&rdquo;
-                </p>
-              </div>
-              <div className="flex items-center gap-3 pt-6 border-t border-gold-400/10">
-                <div className="h-10 w-10 bg-gold-400/10 rounded-full flex items-center justify-center border border-gold-400/25">
-                  <span className="text-gold-400 font-serif font-bold text-sm">AK</span>
-                </div>
-                <div>
-                  <h4 className="text-xs uppercase tracking-widest text-gold-100 font-semibold font-sans">
-                    Amit K
-                  </h4>
-                  <p className="text-[10px] text-gold-200/50">Google review</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Review 2 */}
-            <div className="glass-card rounded-lg p-8 relative flex flex-col justify-between space-y-6">
-              <Quote className="absolute top-6 right-8 h-12 w-12 text-gold-400/5 pointer-events-none" />
-              <div className="space-y-4">
-                <div className="flex gap-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-gold-400 text-gold-400" />
-                  ))}
-                </div>
-                <p className="text-gold-100/90 font-normal text-base leading-relaxed italic">
-                  &ldquo;I stayed for two days. The ambience was wonderful, the staff were courteous, the rooms were clean, and the food was delicious. The tea served in an earthen pot was especially memorable.&rdquo;
-                </p>
-              </div>
-              <div className="flex items-center gap-3 pt-6 border-t border-gold-400/10">
-                <div className="h-10 w-10 bg-gold-400/10 rounded-full flex items-center justify-center border border-gold-400/25">
-                  <span className="text-gold-400 font-serif font-bold text-sm">RR</span>
-                </div>
-                <div>
-                  <h4 className="text-xs uppercase tracking-widest text-gold-100 font-semibold font-sans">
-                    Rituraj Rathore
-                  </h4>
-                  <p className="text-[10px] text-gold-200/50">Google review</p>
+                <div className="flex items-center gap-3 pt-6 border-t border-gold-400/10">
+                  <div className="h-10 w-10 bg-gold-400/10 rounded-full flex items-center justify-center border border-gold-400/25">
+                    <span className="text-gold-400 font-serif font-bold text-sm">
+                      {rev.authorInitials || (rev.authorName ? rev.authorName.substring(0, 2).toUpperCase() : "GR")}
+                    </span>
+                  </div>
+                  <div>
+                    <h4 className="text-xs uppercase tracking-widest text-gold-100 font-semibold font-sans">
+                      {rev.authorName}
+                    </h4>
+                    <p className="text-[10px] text-gold-200/50">{rev.source || "Google review"}</p>
+                  </div>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
@@ -963,7 +1013,7 @@ export default function Home() {
           </div>
 
           <div className="space-y-4">
-            {faqs.map((faq, index) => (
+            {faqsList.map((faq, index) => (
               <div
                 key={index}
                 className="border border-gold-400/10 rounded-lg overflow-hidden bg-cream/40"
@@ -1026,7 +1076,7 @@ export default function Home() {
                 <div>
                   <h3 className="font-serif text-base text-gold-100 font-medium mb-1">Address</h3>
                   <p className="leading-relaxed font-light text-xs sm:text-sm">
-                    {cmsSettings.address || "Kachari Chowk, MG Road, Bhagalpur, Bihar – 812001, India"}
+                    {cmsSettings.address_full || cmsSettings.address || "Kachari Chowk, MG Road, Bhagalpur, Bihar – 812001, India"}
                   </p>
                   <a
                     href="https://maps.app.goo.gl/77AAPZ7hRje8Nrmk9"
@@ -1059,8 +1109,8 @@ export default function Home() {
                 <div>
                   <h3 className="font-serif text-base text-gold-100 font-medium mb-1">Email</h3>
                   <p className="leading-relaxed font-light font-mono text-xs sm:text-sm">
-                    <a href={`mailto:${cmsSettings.email_primary || "info@hotelrajhansinternational.com"}`} className="hover:text-gold-300 transition-colors">
-                      {cmsSettings.email_primary || "info@hotelrajhansinternational.com"}
+                    <a href={`mailto:${cmsSettings.email_official || cmsSettings.email_primary || "info@hotelrajhansinternational.com"}`} className="hover:text-gold-300 transition-colors">
+                      {cmsSettings.email_official || cmsSettings.email_primary || "info@hotelrajhansinternational.com"}
                     </a>
                   </p>
                 </div>

@@ -83,6 +83,23 @@ export async function getAvailablePhysicalRooms(
     }
   }
 
+  // 3. Find any active room blocks that overlap with the requested dates
+  const overlappingBlocks = await client.roomBlock.findMany({
+    where: {
+      physicalRoomId: { in: roomIds },
+      status: "ACTIVE",
+      AND: [
+        { startDate: { lt: checkOutDate } },
+        { endDate: { gt: checkInDate } },
+      ],
+    },
+    select: { physicalRoomId: true },
+  });
+
+  for (const block of overlappingBlocks) {
+    occupiedIds.add(block.physicalRoomId);
+  }
+
   return physicalRooms
     .filter((room) => !occupiedIds.has(room.id))
     .map((room) => ({

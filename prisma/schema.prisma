@@ -39,6 +39,22 @@ enum RoomStatus {
   OUT_OF_ORDER
   MAINTENANCE
   DEACTIVATED
+  BLOCKED
+}
+
+enum RoomBlockType {
+  MAINTENANCE
+  VIP_HOLD
+  DEEP_CLEANING
+  RENOVATION
+  OUT_OF_SERVICE
+  MANAGEMENT_BLOCK
+}
+
+enum RoomBlockStatus {
+  ACTIVE
+  RELEASED
+  CANCELLED
 }
 
 enum HousekeepingStatus {
@@ -368,9 +384,28 @@ model PhysicalRoom {
   assignments         RoomAssignment[]
   housekeepingTasks   HousekeepingTask[]
   maintenanceTickets  MaintenanceTicket[]
+  roomBlocks          RoomBlock[]
 
   @@index([roomTypeId, status])
   @@index([housekeepingStatus])
+}
+
+model RoomBlock {
+  id             String          @id @default(uuid())
+  physicalRoomId String
+  startDate      DateTime
+  endDate        DateTime
+  reason         String
+  blockType      RoomBlockType   @default(MANAGEMENT_BLOCK)
+  status         RoomBlockStatus @default(ACTIVE)
+  createdBy      String?
+  notes          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  physicalRoom   PhysicalRoom    @relation(fields: [physicalRoomId], references: [id], onDelete: Cascade)
+
+  @@index([physicalRoomId, status])
+  @@index([startDate, endDate])
 }
 
 model RoomAssignment {

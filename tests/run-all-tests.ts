@@ -6,6 +6,7 @@ const testSuites = [
   { name: "Dynamic Folio & Split Payment Ledger Tests", file: "tests/folio.test.ts" },
   { name: "Reservation Finite State Machine (FSM) Tests", file: "tests/state-machine.test.ts" },
   { name: "Security, RBAC, HMAC & Rate Limit Tests", file: "tests/security.test.ts" },
+  { name: "Physical Room Inventory Calendar & Date Blocks Tests", file: "tests/room-inventory.test.ts" },
   { name: "Physical Room Double-Booking Concurrency Stress Tests", file: "tests/concurrency.test.ts" },
 ];
 

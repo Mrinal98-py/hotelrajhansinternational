@@ -84,7 +84,9 @@ async function testConcurrencyDoubleBooking() {
   );
 
   // 6. Verification 2: Check for ANY overlapping physical room assignments
-  const assignedRoomIds = succeeded.map((s) => s.assignedRoomId);
+  const assignedRoomIds = succeeded
+    .filter((s): s is { success: true; bookingId: string; assignedRoomId: string } => "assignedRoomId" in s)
+    .map((s) => s.assignedRoomId);
   const uniqueAssignedRooms = new Set(assignedRoomIds);
 
   assert.equal(

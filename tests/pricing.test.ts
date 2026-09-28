@@ -18,7 +18,7 @@ async function testPricingEngine() {
     roomTypeId: room.id,
     checkIn,
     checkOut,
-    guestsCount: 2,
+    adults: 2,
     extraBeds: 0,
   });
 
@@ -45,7 +45,7 @@ async function testPricingEngine() {
     roomTypeId: room.id,
     checkIn,
     checkOut,
-    guestsCount: 3,
+    adults: 3,
     extraBeds: 1,
   });
 

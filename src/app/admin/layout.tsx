@@ -70,8 +70,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       title: "Front Desk & Stays",
       items: [
         { label: "Front Desk Operations", href: "/admin/front-desk", icon: ConciergeBell },
+        { label: "Tape Chart Calendar", href: "/admin/room-inventory", icon: Grid3X3 },
         { label: "Bookings", href: "/admin/bookings", icon: CalendarCheck },
-        { label: "Room Inventory Grid", href: "/admin/inventory", icon: Grid3X3 },
+        { label: "Physical Rooms Grid", href: "/admin/inventory", icon: BedDouble },
         { label: "Room Types & Rates", href: "/admin/rooms", icon: BedDouble },
       ],
     },

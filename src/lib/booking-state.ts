@@ -308,10 +308,19 @@ export async function transitionBookingStatus(params: {
       );
     }
 
-    // 5. Update Master Booking Status
+    // 5. Update Master Booking Status & Timestamps
+    const bookingUpdateData: any = { status: targetStatus };
+    if (targetStatus === BookingStatus.CHECKED_IN) {
+      bookingUpdateData.actualCheckInAt = now;
+      if (!booking.scheduledCheckIn) bookingUpdateData.scheduledCheckIn = booking.checkIn;
+      if (!booking.scheduledCheckOut) bookingUpdateData.scheduledCheckOut = booking.checkOut;
+    } else if (targetStatus === BookingStatus.CHECKED_OUT) {
+      bookingUpdateData.actualCheckOutAt = now;
+    }
+
     await tx.booking.update({
       where: { id: bookingId },
-      data: { status: targetStatus },
+      data: bookingUpdateData,
     });
 
     // 6. Append Immutable Audit Log

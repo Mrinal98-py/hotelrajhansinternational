@@ -100,6 +100,20 @@ export async function POST(request: Request) {
         },
       });
 
+      // Record RoomTransfer if changing from a previously assigned room
+      if (booking.assignedRoomId && booking.assignedRoomId !== physicalRoomId) {
+        await tx.roomTransfer.create({
+          data: {
+            bookingId,
+            fromPhysicalRoomId: booking.assignedRoomId,
+            toPhysicalRoomId: physicalRoomId,
+            reason: (body.reason as any) || "OPERATIONAL",
+            notes: notes || "Reassigned by staff",
+            performedBy: currentStaff.name,
+          },
+        });
+      }
+
       // If checked in, ensure target room is OCCUPIED
       if (booking.status === "CHECKED_IN") {
         await tx.physicalRoom.update({

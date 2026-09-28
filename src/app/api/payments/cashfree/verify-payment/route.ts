@@ -67,6 +67,32 @@ export async function POST(request: Request) {
     const paymentId = successfulPayment?.cf_payment_id || `cf_pay_${orderId}`;
     const paymentMethod = successfulPayment?.payment_group || "UPI";
 
+    // Strict Server-Side Payment Security Validation
+    if (successfulPayment) {
+      if (successfulPayment.payment_currency && successfulPayment.payment_currency.toUpperCase() !== "INR") {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Invalid payment currency ${successfulPayment.payment_currency}. Only INR transactions are accepted.`,
+          },
+          { status: 400 }
+        );
+      }
+
+      if (
+        successfulPayment.payment_amount !== undefined &&
+        successfulPayment.payment_amount < booking.netAmount
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Payment amount mismatch: Received ₹${successfulPayment.payment_amount}, expected ₹${booking.netAmount}.`,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     // 3. Authoritative Transactional Payment Confirmation Pipeline
     const confirmResult = await confirmBookingPayment({
       bookingId: booking.id,

@@ -8,6 +8,7 @@ const testSuites = [
   { name: "Security, RBAC, HMAC & Rate Limit Tests", file: "tests/security.test.ts" },
   { name: "Physical Room Inventory Calendar & Date Blocks Tests", file: "tests/room-inventory.test.ts" },
   { name: "Payment Confirmation & Booking Pipeline Tests", file: "tests/payment-confirm.test.ts" },
+  { name: "End-to-End Hotel Guest & Operational Lifecycle Test", file: "tests/end-to-end-lifecycle.test.ts" },
   { name: "Physical Room Double-Booking Concurrency Stress Tests", file: "tests/concurrency.test.ts" },
 ];
 

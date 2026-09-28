@@ -693,8 +693,8 @@ npm test
 | `DATABASE_URL` | **Yes** | Neon PostgreSQL connection string with SSL | `postgresql://user:pass@ep-xyz.us-east-2.aws.neon.tech/neondb?sslmode=require` |
 | `JWT_SECRET` | **Yes** | Secret key for signing and verifying HS256 tokens | `super-secret-hotel-rajhans-jwt-key-2026-secure` |
 | `NEXTAUTH_SECRET` | **Yes** | Fallback secret for session token signing | `super-secret-hotel-rajhans-jwt-key-2026-secure` |
-| `CASHFREE_APP_ID` | **Yes** | Cashfree Live Production Client / App ID | `138094154884ce1eb76861254c91490831` |
-| `CASHFREE_SECRET_KEY` | **Yes** | Cashfree Live Production Client Secret Key | `cfsk_ma_prod_03f7b49ec4143dbca5083b7b4acba0d5_...` |
+| `CASHFREE_APP_ID` | **Yes** | Cashfree Live Production Client / App ID | `cf_app_id_placeholder` |
+| `CASHFREE_SECRET_KEY` | **Yes** | Cashfree Live Production Client Secret Key | `cf_secret_key_placeholder` |
 | `CASHFREE_ENV` | **Yes** | Gateway environment (`PRODUCTION` or `SANDBOX`) | `PRODUCTION` |
 | `CASHFREE_API_VERSION` | **Yes** | Cashfree API version header | `2023-08-01` |
 | `SMTP_HOST` | Optional | SMTP mail host for transactional emails | `smtp.gmail.com` |

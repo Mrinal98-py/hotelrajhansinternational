@@ -6,7 +6,9 @@ import {
   RefreshCw,
   FileText,
   Eye,
-  X
+  X,
+  BookmarkCheck,
+  CheckCircle2
 } from "lucide-react";
 
 import { adminFetch } from "@/lib/admin-fetch";
@@ -19,6 +21,7 @@ export default function AdminBookingsPage() {
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [updating, setUpdating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const fetchBookings = () => {
     setLoading(true);
@@ -53,6 +56,7 @@ export default function AdminBookingsPage() {
 
   const updateBookingStatus = async (id: string, newStatus: string) => {
     setUpdating(true);
+    setErrorMessage(null);
     try {
       const res = await adminFetch(`/api/bookings/${id}`, {
         method: "PUT",
@@ -60,16 +64,22 @@ export default function AdminBookingsPage() {
         body: JSON.stringify({ status: newStatus }),
       });
       const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error?.message || data.error || "Failed to update booking status");
+      }
       const updated = data.data?.booking || data.booking;
       if (data.success && updated) {
         setBookings((prev) => prev.map((b: any) => (b.id === id ? updated : b)));
         if (selectedBooking && selectedBooking.id === id) {
           setSelectedBooking(updated);
         }
+        setSuccessMessage(`Booking ${updated.referenceId} updated to ${updated.status === "CONFIRMED" ? "RESERVED" : updated.status}`);
+        setTimeout(() => setSuccessMessage(null), 4000);
         fetchBookings();
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to update status:", err);
+      setErrorMessage(err.message || "Failed to update booking status");
     } finally {
       setUpdating(false);
     }
@@ -109,7 +119,7 @@ export default function AdminBookingsPage() {
         </form>
 
         <div className="flex flex-wrap gap-2 w-full md:w-auto">
-          {["ALL", "PENDING", "CONFIRMED", "CHECKED_IN", "CHECKED_OUT", "CANCELLED"].map((st) => (
+          {["ALL", "CONFIRMED", "PENDING", "CHECKED_IN", "CHECKED_OUT", "CANCELLED"].map((st) => (
             <button
               key={st}
               onClick={() => setStatusFilter(st)}
@@ -119,11 +129,19 @@ export default function AdminBookingsPage() {
                   : "bg-slate-50 text-slate-800 border border-slate-300 hover:text-slate-900 hover:bg-slate-100"
               }`}
             >
-              {st.replace("_", " ")}
+              {st === "CONFIRMED" ? "RESERVED" : st.replace("_", " ")}
             </button>
           ))}
         </div>
       </div>
+
+      {/* Success Banner */}
+      {successMessage && (
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-semibold flex items-center gap-2 shadow-xs">
+          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+          <span>{successMessage}</span>
+        </div>
+      )}
 
       {/* Error Banner */}
       {errorMessage && (
@@ -199,10 +217,21 @@ export default function AdminBookingsPage() {
                             : "bg-amber-100 text-amber-900 border-amber-300"
                         }`}
                       >
-                        {b.status}
+                        {b.status === "CONFIRMED" ? "RESERVED" : b.status}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 text-right space-x-2">
+                    <td className="py-3.5 px-4 text-right space-x-2 whitespace-nowrap">
+                      {b.status !== "CONFIRMED" && b.status !== "CHECKED_IN" && b.status !== "CHECKED_OUT" && (
+                        <button
+                          onClick={() => updateBookingStatus(b.id, "CONFIRMED")}
+                          disabled={updating}
+                          className="px-2.5 py-1 rounded-lg border border-blue-300 bg-blue-50 hover:bg-blue-100 text-blue-800 text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer transition-all shadow-xs"
+                          title="Directly update status to Reserved"
+                        >
+                          <BookmarkCheck className="h-3.5 w-3.5 text-blue-700" />
+                          <span>Reserve</span>
+                        </button>
+                      )}
                       <button
                         onClick={() => setSelectedBooking(b)}
                         className="p-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-900 cursor-pointer"
@@ -297,9 +326,15 @@ export default function AdminBookingsPage() {
                 <button
                   onClick={() => updateBookingStatus(selectedBooking.id, "CONFIRMED")}
                   disabled={updating}
-                  className="py-2.5 px-3 rounded-lg border border-slate-300 bg-slate-100 text-slate-900 text-xs uppercase font-bold hover:bg-slate-200 cursor-pointer"
+                  className={`py-2.5 px-3 rounded-lg border text-xs uppercase font-bold cursor-pointer transition-all flex items-center justify-center gap-1.5 ${
+                    selectedBooking.status === "CONFIRMED"
+                      ? "bg-emerald-600 text-white border-emerald-700 shadow-sm"
+                      : "bg-blue-50 text-blue-800 border-blue-300 hover:bg-blue-100"
+                  }`}
+                  title="Directly mark reservation status as Reserved"
                 >
-                  Confirm
+                  <BookmarkCheck className="h-3.5 w-3.5" />
+                  {selectedBooking.status === "CONFIRMED" ? "Reserved ✓" : "Mark Reserved"}
                 </button>
                 <button
                   onClick={() => updateBookingStatus(selectedBooking.id, "CHECKED_IN")}

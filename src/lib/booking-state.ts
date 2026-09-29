@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { BookingStatus, RoomStatus, HousekeepingStatus, AssignmentStatus, TaskType, TaskPriority, TaskStatus, FolioItemType } from "@prisma/client";
 import { addFolioItem, getOrCreateFolio } from "@/lib/folio";
 import { queueOutboxEvent } from "@/lib/outbox";
+import { allocatePhysicalRoomAtomic } from "@/lib/inventory";
 
 export interface StateTransitionResult {
   success: boolean;
@@ -16,8 +17,8 @@ const ALLOWED_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
   CONFIRMED: [BookingStatus.CHECKED_IN, BookingStatus.CANCELLED, BookingStatus.NO_SHOW],
   CHECKED_IN: [BookingStatus.CHECKED_OUT],
   CHECKED_OUT: [], // Terminal
-  CANCELLED: [BookingStatus.REFUNDED],
-  NO_SHOW: [BookingStatus.REFUNDED],
+  CANCELLED: [BookingStatus.CONFIRMED, BookingStatus.REFUNDED],
+  NO_SHOW: [BookingStatus.CONFIRMED, BookingStatus.REFUNDED],
   REFUNDED: [], // Terminal
 };
 
@@ -39,10 +40,11 @@ export async function transitionBookingStatus(params: {
   targetStatus: BookingStatus;
   userId?: string;
   userName?: string;
+  userRole?: string;
   reason?: string;
   bypassBalanceCheck?: boolean;
 }): Promise<StateTransitionResult> {
-  const { bookingId, targetStatus, userId, userName = "Staff", reason, bypassBalanceCheck } = params;
+  const { bookingId, targetStatus, userId, userName = "Staff", userRole, reason, bypassBalanceCheck } = params;
 
   return await prisma.$transaction(async (tx) => {
     const booking = await tx.booking.findUnique({
@@ -71,14 +73,40 @@ export async function transitionBookingStatus(params: {
       };
     }
 
-    if (!isValidTransition(currentStatus, targetStatus)) {
+    const isManager = userRole === "MANAGER" || userRole === "SUPER_ADMIN";
+
+    if (!isValidTransition(currentStatus, targetStatus) && !(isManager && targetStatus === BookingStatus.CONFIRMED)) {
       throw new Error(
         `Invalid status transition: Cannot change booking from ${currentStatus} to ${targetStatus}`
       );
     }
 
-    const assignedRoomId = booking.assignedRoomId;
+    let assignedRoomId = booking.assignedRoomId;
     const now = new Date();
+
+    // 0. Specific Confirmation / Reservation Logic (Direct manager reservation)
+    if (targetStatus === BookingStatus.CONFIRMED) {
+      if (!assignedRoomId) {
+        try {
+          assignedRoomId = await allocatePhysicalRoomAtomic(
+            booking.id,
+            booking.roomId,
+            booking.checkIn,
+            booking.checkOut,
+            undefined,
+            userName || "Manager Reservation",
+            tx
+          );
+        } catch (allocErr: any) {
+          throw new Error(`Cannot reserve booking: ${allocErr.message || "No rooms available for dates"}`);
+        }
+      } else {
+        await tx.roomAssignment.updateMany({
+          where: { bookingId, physicalRoomId: assignedRoomId, status: { not: "ASSIGNED" } },
+          data: { status: AssignmentStatus.ASSIGNED },
+        });
+      }
+    }
 
     // 1. Specific Check-In Logic
     if (targetStatus === BookingStatus.CHECKED_IN) {

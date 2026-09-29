@@ -205,7 +205,11 @@ export default function SiteFooter() {
             <span>Kachari Chowk, MG Road, Bhagalpur</span>
             <span>•</span>
             <Link href="/sitemap.xml" className="hover:underline">
-              Sitemap
+              Sitemap (XML)
+            </Link>
+            <span>•</span>
+            <Link href="/sitemap.txt" className="hover:underline">
+              Sitemap (TXT)
             </Link>
           </div>
         </div>

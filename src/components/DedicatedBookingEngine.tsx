@@ -25,6 +25,9 @@ export default function DedicatedBookingEngine() {
   const searchParams = useSearchParams();
   const initialRoom = searchParams.get("room") || "executive";
   const initialCoupon = searchParams.get("coupon") || "";
+  const initialCheckIn = searchParams.get("checkIn") || "";
+  const initialCheckOut = searchParams.get("checkOut") || "";
+  const initialGuests = searchParams.get("guests") || "2";
 
   // Normalize initial room
   const normalizeRoom = (val: string) => {
@@ -35,9 +38,9 @@ export default function DedicatedBookingEngine() {
   };
 
   const [formData, setFormData] = useState({
-    checkIn: "",
-    checkOut: "",
-    guests: "2",
+    checkIn: initialCheckIn,
+    checkOut: initialCheckOut,
+    guests: initialGuests,
     roomType: normalizeRoom(initialRoom),
     name: "",
     phone: "",
@@ -57,7 +60,7 @@ export default function DedicatedBookingEngine() {
   const [bookingRef, setBookingRef] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Set default dates: check-in today, check-out tomorrow
+  // Set default dates if not provided in URL
   useEffect(() => {
     const today = new Date();
     const tomorrow = new Date(today);
@@ -67,10 +70,11 @@ export default function DedicatedBookingEngine() {
 
     setFormData((prev) => ({
       ...prev,
-      checkIn: prev.checkIn || formatDate(today),
-      checkOut: prev.checkOut || formatDate(tomorrow),
+      checkIn: prev.checkIn || initialCheckIn || formatDate(today),
+      checkOut: prev.checkOut || initialCheckOut || formatDate(tomorrow),
+      guests: prev.guests || initialGuests || "2",
     }));
-  }, []);
+  }, [initialCheckIn, initialCheckOut, initialGuests]);
 
   // Update room from query param if changed
   useEffect(() => {

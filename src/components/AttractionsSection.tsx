@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { MapPin, Compass, Car, ExternalLink, Phone, Sparkles, Landmark, Trees, Milestone } from "lucide-react";
+import Link from "next/link";
+import { MapPin, Compass, Car, ExternalLink, Phone, Sparkles, Landmark, Trees, Milestone, ArrowRight } from "lucide-react";
 
 export interface TouristAttraction {
   id: string;
@@ -14,6 +15,7 @@ export interface TouristAttraction {
   description: string;
   imageSrc: string;
   mapsUrl: string;
+  guideUrl?: string;
   icon: any;
 }
 
@@ -30,6 +32,7 @@ const ATTRACTIONS: TouristAttraction[] = [
       "Founded by King Dharmapala, Vikramshila was one of the two premier Buddhist universities of ancient India alongside Nalanda. Explore the magnificent central stupa, monastery cells, and archaeological museum.",
     imageSrc: "/images/attractions/vikramshila.jpg",
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=Vikramshila+Ancient+University+Ruins+Kahalgaon+Bhagalpur",
+    guideUrl: "/attractions/vikramshila",
     icon: Landmark,
   },
   {
@@ -44,6 +47,7 @@ const ATTRACTIONS: TouristAttraction[] = [
       "Spanning 60 km along the Ganges River, this sanctuary protects the endangered freshwater Gangetic Dolphin (Platanista gangetica), river turtles, and migratory waterfowl. Boat tours available at ghats.",
     imageSrc: "/images/attractions/dolphin_sanctuary.jpg",
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=Vikramshila+Gangetic+Dolphin+Sanctuary+Bhagalpur",
+    guideUrl: "/attractions",
     icon: Trees,
   },
   {
@@ -58,6 +62,7 @@ const ATTRACTIONS: TouristAttraction[] = [
       "Celebrated in Hindu epics as the churning rod used during Samudra Manthan (ocean churning). Features a scenic ropeway cable car, the sacred Papaharini Lake, ancient stone carvings, and 12th Jain Tirthankara shrine.",
     imageSrc: "/images/attractions/mandar_hill.jpg",
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=Mandar+Hill+Banka+Bhagalpur",
+    guideUrl: "/attractions/mandar-hill",
     icon: Milestone,
   },
   {
@@ -72,6 +77,7 @@ const ATTRACTIONS: TouristAttraction[] = [
       "Perched atop a natural rock island in the flowing Ganges river at Sultanganj. Famous worldwide as the starting point for millions of pilgrims taking Uttarvahini Gangajal to Baidyanath Dham (Deoghar).",
     imageSrc: "/images/attractions/ajgaivinath_temple.jpg",
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=Ajgaivinath+Temple+Sultanganj+Bhagalpur",
+    guideUrl: "/attractions",
     icon: Landmark,
   },
 ];
@@ -158,16 +164,25 @@ export default function AttractionsSection() {
                     </p>
                   </div>
 
-                  {/* Card Action Link */}
-                  <div className="pt-4 border-t border-gold-400/10 flex items-center justify-between">
+                  {/* Card Action Links */}
+                  <div className="pt-4 border-t border-gold-400/10 flex items-center justify-between gap-3">
+                    {spot.guideUrl && (
+                      <Link
+                        href={spot.guideUrl}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-gold-300 hover:text-white transition-colors uppercase tracking-wider font-sans group/link"
+                      >
+                        <span>Explore Guide</span>
+                        <ArrowRight className="h-3.5 w-3.5 group-hover/link:translate-x-0.5 transition-transform text-gold-400" />
+                      </Link>
+                    )}
                     <a
                       href={spot.mapsUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-xs font-semibold text-gold-400 hover:text-gold-300 transition-colors uppercase tracking-wider font-sans group/link"
+                      className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-gold-400 hover:text-gold-200 transition-colors uppercase tracking-wider font-sans group/link ml-auto"
                     >
-                      <span>Get Directions on Google Maps</span>
-                      <ExternalLink className="h-3.5 w-3.5 group-hover/link:translate-x-0.5 transition-transform" />
+                      <span>Directions</span>
+                      <ExternalLink className="h-3 w-3 group-hover/link:translate-x-0.5 transition-transform" />
                     </a>
                   </div>
                 </div>

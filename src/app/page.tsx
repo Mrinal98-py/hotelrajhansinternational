@@ -110,6 +110,11 @@ export default function Home() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // Search availability state for dedicated booking URL
+  const [searchCheckIn, setSearchCheckIn] = useState(todayIso);
+  const [searchCheckOut, setSearchCheckOut] = useState(tomorrowIso);
+  const [searchGuests, setSearchGuests] = useState("2");
+
   // Dynamic DB Data state with fallbacks matching database baseline
   const [roomRates, setRoomRates] = useState<Record<string, { single: number; double: number }>>({
     executive: { single: 3790, double: 4490 },
@@ -281,6 +286,16 @@ export default function Home() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Sanitize legacy or shared anchor URLs like /#hero or /#
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash) {
+      if (window.location.hash === "#hero" || window.location.hash === "#") {
+        window.history.replaceState(null, "", window.location.pathname + window.location.search);
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      }
+    }
+  }, []);
+
   const openBooking = (category: string) => {
     setSelectedRoomCategory(category);
     setIsBookingOpen(true);
@@ -315,7 +330,7 @@ export default function Home() {
       <SiteHeader />
 
       {/* 2. Fullscreen Hero Section */}
-      <section id="hero" className="relative h-screen w-full overflow-visible bg-cream flex flex-col justify-center">
+      <section aria-label="Hero Showcase" className="relative h-screen w-full overflow-visible bg-cream flex flex-col justify-center">
         {/* Slideshow */}
         <div className="absolute inset-0 z-0 overflow-hidden">
           <AnimatePresence>
@@ -366,18 +381,18 @@ export default function Home() {
             transition={{ duration: 0.35, delay: 0.22 }}
             className="mt-8 flex flex-wrap gap-4 justify-center"
           >
-            <button
-              onClick={() => openBooking("executive")}
-              className="bg-gradient-to-r from-gold-600 to-gold-400 hover:from-gold-700 hover:to-gold-500 text-brown-900 font-medium uppercase tracking-widest text-xs py-3.5 px-8 rounded-full transition-all duration-300 shadow-xl shadow-gold-400/25 cursor-pointer"
+            <Link
+              href="/booking"
+              className="bg-gradient-to-r from-gold-600 to-gold-400 hover:from-gold-700 hover:to-gold-500 text-brown-900 font-medium uppercase tracking-widest text-xs py-3.5 px-8 rounded-full transition-all duration-300 shadow-xl shadow-gold-400/25 cursor-pointer inline-flex items-center justify-center"
             >
               Book a Room
-            </button>
-            <a
-              href="#about"
-              className="hidden sm:inline-flex border border-gold-200/30 hover:border-gold-300 text-gold-200 hover:text-gold-50 hover:bg-brown-900/5 font-medium uppercase tracking-widest text-xs py-3.5 px-8 rounded-full transition-all duration-300 cursor-pointer"
+            </Link>
+            <Link
+              href="/about"
+              className="hidden sm:inline-flex border border-gold-200/30 hover:border-gold-300 text-gold-200 hover:text-gold-50 hover:bg-brown-900/5 font-medium uppercase tracking-widest text-xs py-3.5 px-8 rounded-full transition-all duration-300 cursor-pointer items-center justify-center"
             >
               About the Hotel
-            </a>
+            </Link>
           </motion.div>
         </div>
 
@@ -392,7 +407,7 @@ export default function Home() {
           </motion.div>
         </div>
 
-        {/* 3. Luxury Booking Widget */}
+        {/* 3. Luxury Booking Widget with Dedicated URL Navigation */}
         <div className="relative md:absolute bottom-0 left-0 right-0 z-20 w-full md:transform md:translate-y-1/2 px-4 md:px-6 mt-12 md:mt-0">
           <div className="max-w-6xl mx-auto glass-panel rounded-lg shadow-2xl p-5 border border-gold-400/15 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
             <div>
@@ -401,7 +416,8 @@ export default function Home() {
                 <input
                   type="date"
                   className="w-full bg-paper border border-gold-400/20 rounded-lg py-2.5 px-3 text-gold-100 text-xs focus:outline-none focus:border-gold-400/40"
-                  defaultValue={todayIso}
+                  value={searchCheckIn}
+                  onChange={(e) => setSearchCheckIn(e.target.value)}
                 />
               </div>
             </div>
@@ -410,24 +426,29 @@ export default function Home() {
               <input
                 type="date"
                 className="w-full bg-paper border border-gold-400/20 rounded-lg py-2.5 px-3 text-gold-100 text-xs focus:outline-none focus:border-gold-400/40"
-                defaultValue={tomorrowIso}
+                value={searchCheckOut}
+                onChange={(e) => setSearchCheckOut(e.target.value)}
               />
             </div>
             <div>
               <label className="block text-[10px] font-medium uppercase tracking-widest text-gold-200/80 mb-2">Guests</label>
-              <select defaultValue="2" className="w-full bg-paper border border-gold-400/20 rounded-lg py-2.5 px-3 text-gold-100 text-xs focus:outline-none focus:border-gold-400/40">
+              <select
+                value={searchGuests}
+                onChange={(e) => setSearchGuests(e.target.value)}
+                className="w-full bg-paper border border-gold-400/20 rounded-lg py-2.5 px-3 text-gold-100 text-xs focus:outline-none focus:border-gold-400/40"
+              >
                 <option value="1">1 Guest</option>
                 <option value="2">2 Guests</option>
                 <option value="3">3 Guests</option>
                 <option value="4">4 Guests</option>
               </select>
             </div>
-            <button
-              onClick={() => openBooking("executive")}
-              className="w-full bg-gradient-to-r from-gold-600 to-gold-400 hover:from-gold-700 hover:to-gold-500 text-brown-900 font-medium uppercase tracking-widest text-xs py-3 px-4 rounded-lg transition-all duration-300 shadow-md shadow-gold-400/10 cursor-pointer h-[42px] flex items-center justify-center"
+            <Link
+              href={`/booking?checkIn=${encodeURIComponent(searchCheckIn)}&checkOut=${encodeURIComponent(searchCheckOut)}&guests=${encodeURIComponent(searchGuests)}`}
+              className="w-full bg-gradient-to-r from-gold-600 to-gold-400 hover:from-gold-700 hover:to-gold-500 text-brown-900 font-bold uppercase tracking-widest text-xs py-3 px-4 rounded-lg transition-all duration-300 shadow-md shadow-gold-400/10 cursor-pointer h-[42px] flex items-center justify-center text-center"
             >
               Check Availability
-            </button>
+            </Link>
           </div>
         </div>
       </section>
@@ -614,12 +635,12 @@ export default function Home() {
                     <span>Explore AC Executive Rooms</span>
                     <ArrowRight className="h-3 w-3 text-gold-400" />
                   </Link>
-                  <button
-                    onClick={() => openBooking("executive")}
-                    className="py-2.5 px-4 bg-gradient-to-r from-gold-600 to-gold-400 hover:from-gold-700 hover:to-gold-500 text-brown-900 font-bold uppercase tracking-widest text-[10px] rounded-lg transition-all duration-300 cursor-pointer"
+                  <Link
+                    href="/booking?room=ac-executive"
+                    className="py-2.5 px-4 bg-gradient-to-r from-gold-600 to-gold-400 hover:from-gold-700 hover:to-gold-500 text-brown-900 font-bold uppercase tracking-widest text-[10px] rounded-lg transition-all duration-300 cursor-pointer flex items-center justify-center"
                   >
                     Book Room
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -692,12 +713,12 @@ export default function Home() {
                     <span>Explore AC Deluxe Rooms</span>
                     <ArrowRight className="h-3 w-3 text-gold-400" />
                   </Link>
-                  <button
-                    onClick={() => openBooking("deluxe")}
-                    className="py-2.5 px-4 bg-gradient-to-r from-gold-600 to-gold-400 hover:from-gold-700 hover:to-gold-500 text-brown-900 font-bold uppercase tracking-widest text-[10px] rounded-lg transition-all duration-300 cursor-pointer"
+                  <Link
+                    href="/booking?room=ac-deluxe"
+                    className="py-2.5 px-4 bg-gradient-to-r from-gold-600 to-gold-400 hover:from-gold-700 hover:to-gold-500 text-brown-900 font-bold uppercase tracking-widest text-[10px] rounded-lg transition-all duration-300 cursor-pointer flex items-center justify-center"
                   >
                     Book Room
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -767,12 +788,12 @@ export default function Home() {
                     <span>Explore Royal Suite</span>
                     <ArrowRight className="h-3 w-3 text-gold-400" />
                   </Link>
-                  <button
-                    onClick={() => openBooking("royal")}
-                    className="py-2.5 px-4 bg-gradient-to-r from-gold-600 to-gold-400 hover:from-gold-700 hover:to-gold-500 text-brown-900 font-bold uppercase tracking-widest text-[10px] rounded-lg transition-all duration-300 cursor-pointer"
+                  <Link
+                    href="/booking?room=royal-suite"
+                    className="py-2.5 px-4 bg-gradient-to-r from-gold-600 to-gold-400 hover:from-gold-700 hover:to-gold-500 text-brown-900 font-bold uppercase tracking-widest text-[10px] rounded-lg transition-all duration-300 cursor-pointer flex items-center justify-center"
                   >
                     Book Suite
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>

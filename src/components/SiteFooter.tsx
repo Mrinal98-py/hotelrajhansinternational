@@ -171,11 +171,6 @@ export default function SiteFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/offers" className="hover:text-brown-950 hover:underline">
-                  Exclusive Offers
-                </Link>
-              </li>
-              <li>
                 <Link href="/contact" className="hover:text-brown-950 hover:underline">
                   Contact & Inquiries
                 </Link>

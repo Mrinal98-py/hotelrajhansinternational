@@ -62,12 +62,6 @@ export default function SiteHeader() {
               <Phone className="h-3 w-3 text-brown-600" />
               <span>Call: {HOTEL_INFO.telephone}</span>
             </a>
-            <Link
-              href="/offers"
-              className="px-2 py-0.5 rounded bg-brown-900/10 text-brown-900 text-[10px] font-bold uppercase tracking-wider hover:bg-brown-900/15"
-            >
-              Special Offers
-            </Link>
           </div>
         </div>
       </header>
@@ -339,9 +333,6 @@ export default function SiteHeader() {
               </Link>
               <Link href="/faq" className="p-2.5 rounded-lg bg-cream/50 hover:bg-cream">
                 FAQs
-              </Link>
-              <Link href="/offers" className="p-2.5 rounded-lg bg-cream/50 hover:bg-cream">
-                Offers
               </Link>
               <Link href="/contact" className="p-2.5 rounded-lg bg-cream/50 hover:bg-cream">
                 Contact Us

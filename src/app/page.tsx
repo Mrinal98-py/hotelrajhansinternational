@@ -281,6 +281,16 @@ export default function Home() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Sanitize legacy or shared anchor URLs like /#hero or /#
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash) {
+      if (window.location.hash === "#hero" || window.location.hash === "#") {
+        window.history.replaceState(null, "", window.location.pathname + window.location.search);
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      }
+    }
+  }, []);
+
   const openBooking = (category: string) => {
     setSelectedRoomCategory(category);
     setIsBookingOpen(true);
@@ -315,7 +325,7 @@ export default function Home() {
       <SiteHeader />
 
       {/* 2. Fullscreen Hero Section */}
-      <section id="hero" className="relative h-screen w-full overflow-visible bg-cream flex flex-col justify-center">
+      <section aria-label="Hero Showcase" className="relative h-screen w-full overflow-visible bg-cream flex flex-col justify-center">
         {/* Slideshow */}
         <div className="absolute inset-0 z-0 overflow-hidden">
           <AnimatePresence>
@@ -372,12 +382,12 @@ export default function Home() {
             >
               Book a Room
             </button>
-            <a
-              href="#about"
+            <Link
+              href="/about"
               className="hidden sm:inline-flex border border-gold-200/30 hover:border-gold-300 text-gold-200 hover:text-gold-50 hover:bg-brown-900/5 font-medium uppercase tracking-widest text-xs py-3.5 px-8 rounded-full transition-all duration-300 cursor-pointer"
             >
               About the Hotel
-            </a>
+            </Link>
           </motion.div>
         </div>
 

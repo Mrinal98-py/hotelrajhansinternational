@@ -323,10 +323,10 @@ export default function AdminRoomsPage() {
                   </span>
                   <button
                     type="button"
-                    onClick={() => setEditingRoom({ ...editingRoom, basePriceSingle: 3090 })}
+                    onClick={() => setEditingRoom({ ...editingRoom, basePriceSingle: editingRoom.basePriceDouble })}
                     className="ml-2 px-3 py-1 bg-amber-600 text-white text-[10px] font-bold uppercase rounded-lg shadow hover:bg-amber-700 transition-colors cursor-pointer shrink-0"
                   >
-                    Reset to ₹3,090
+                    Match Double
                   </button>
                 </div>
               )}

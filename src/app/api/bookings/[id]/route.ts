@@ -71,15 +71,19 @@ export async function PUT(
     }
 
     // 1. If status transition is requested, validate and execute via state machine
-    if (status && status !== existing.status) {
-      await transitionBookingStatus({
-        bookingId: id,
-        targetStatus: status,
-        userId: session.userId,
-        userName: session.name,
-        reason: reason || notes,
-        bypassBalanceCheck: Boolean(bypassBalanceCheck && session.role === "SUPER_ADMIN"),
-      });
+    if (status) {
+      const normalizedTarget = status.toUpperCase() === "RESERVED" ? "CONFIRMED" : status;
+      if (normalizedTarget !== existing.status) {
+        await transitionBookingStatus({
+          bookingId: id,
+          targetStatus: normalizedTarget as any,
+          userId: session.userId,
+          userName: session.name,
+          userRole: session.role,
+          reason: reason || notes || (status.toUpperCase() === "RESERVED" ? "Manager updated status to Reserved" : undefined),
+          bypassBalanceCheck: Boolean(bypassBalanceCheck && (session.role === "SUPER_ADMIN" || session.role === "MANAGER")),
+        });
+      }
     }
 
     // 2. Update optional fields

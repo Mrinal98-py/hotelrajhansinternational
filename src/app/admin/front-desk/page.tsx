@@ -137,6 +137,33 @@ export default function FrontDeskPage() {
     );
   });
 
+  // Handle Direct Manager/Staff Reservation
+  const handleMarkReserved = async (booking: any) => {
+    try {
+      setRefreshing(true);
+      const res = await adminFetch(`/api/bookings/${booking.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "RESERVED", reason: "Direct reservation status update" }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setBannerMessage({
+          type: "success",
+          text: `Booking ${booking.referenceId} (${booking.customer?.name}) status updated to Reserved.`,
+        });
+        fetchData();
+      } else {
+        setBannerMessage({ type: "error", text: data.error?.message || data.error || "Failed to mark as reserved" });
+      }
+    } catch (err: any) {
+      setBannerMessage({ type: "error", text: err.message || "Failed to update reservation" });
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   // Handle Quick Check-In
   const handleCheckIn = async (booking: any) => {
     if (!booking.assignedRoomId && (!booking.roomAssignments || booking.roomAssignments.length === 0)) {
@@ -511,12 +538,23 @@ export default function FrontDeskPage() {
                               : "bg-red-50 text-red-700 border border-red-200"
                           }`}
                         >
-                          {b.status}
+                          {b.status === "CONFIRMED" ? "RESERVED" : b.status}
                         </span>
                       </td>
 
                       <td className="py-3.5 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
+                        <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
+                          {/* Direct Reserve Action */}
+                          {b.status !== "CONFIRMED" && b.status !== "CHECKED_IN" && b.status !== "CHECKED_OUT" && (
+                            <button
+                              onClick={() => handleMarkReserved(b)}
+                              className="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-[11px] font-bold cursor-pointer flex items-center gap-1 shadow-xs"
+                              title="Directly reserve booking"
+                            >
+                              <CalendarCheck className="h-3 w-3" /> Reserve
+                            </button>
+                          )}
+
                           {/* Assign Room */}
                           <button
                             onClick={() => {

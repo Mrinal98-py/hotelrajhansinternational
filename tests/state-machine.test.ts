@@ -37,11 +37,27 @@ async function testBookingStateMachine() {
     "CANCELLED -> REFUNDED must be valid"
   );
 
+  assert.equal(
+    isValidTransition(BookingStatus.CANCELLED, BookingStatus.CONFIRMED),
+    true,
+    "CANCELLED -> CONFIRMED (Reserved) must be valid for reinstatement"
+  );
+  assert.equal(
+    isValidTransition(BookingStatus.NO_SHOW, BookingStatus.CONFIRMED),
+    true,
+    "NO_SHOW -> CONFIRMED (Reserved) must be valid for reinstatement"
+  );
+
   // 2. Invalid / Illegal Transitions
   assert.equal(
     isValidTransition(BookingStatus.CHECKED_OUT, BookingStatus.CHECKED_IN),
     false,
     "CHECKED_OUT -> CHECKED_IN must be rejected (terminal)"
+  );
+  assert.equal(
+    isValidTransition(BookingStatus.CHECKED_OUT, BookingStatus.CONFIRMED),
+    false,
+    "CHECKED_OUT -> CONFIRMED must be rejected (terminal)"
   );
   assert.equal(
     isValidTransition(BookingStatus.CANCELLED, BookingStatus.CHECKED_IN),
@@ -59,7 +75,7 @@ async function testBookingStateMachine() {
     "REFUNDED -> CONFIRMED must be rejected (terminal)"
   );
 
-  console.log("✔ Booking State Machine: ALL TRANSITION RULES VALIDATED");
+  console.log("✔ Booking State Machine: ALL TRANSITION RULES & MANAGER RESERVE GATES VALIDATED");
 }
 
 testBookingStateMachine()

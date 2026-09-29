@@ -112,14 +112,54 @@ export default function Home() {
     executive: { single: 3790, double: 4490 },
     deluxe: { single: 3790, double: 4490 },
     royal: { single: 5190, double: 5190 },
-    dormitory: { single: 800, double: 800 },
   });
 
   const [roomStatuses, setRoomStatuses] = useState<Record<string, string>>({
     executive: "AVAILABLE",
     deluxe: "AVAILABLE",
     royal: "AVAILABLE",
-    dormitory: "AVAILABLE",
+  });
+
+  const [roomsData, setRoomsData] = useState<Record<string, {
+    name: string;
+    single: number;
+    double: number;
+    status: string;
+    description: string;
+    amenities: string[];
+  }>>({
+    executive: {
+      name: "Executive Room",
+      single: 3790,
+      double: 4490,
+      status: "DEACTIVATED",
+      description: "Good for solo travellers and short business trips.",
+      amenities: ["Standard Bed", "Study Table", "Fruit Basket", "TV", "Large Wardrobe", "A/C"],
+    },
+    deluxe: {
+      name: "Deluxe Room",
+      single: 3790,
+      double: 4490,
+      status: "DEACTIVATED",
+      description: "More space and a pocket-spring bed.",
+      amenities: ["Pocket Spring Bed", "Study Table", "Fruit Basket", "TV", "Large Wardrobe", "A/C"],
+    },
+    royal: {
+      name: "Royal Suite",
+      single: 5190,
+      double: 5190,
+      status: "DEACTIVATED",
+      description: "Separate bedroom and living room with two washrooms.",
+      amenities: [
+        "Bedroom + Living Room",
+        "Double Washroom",
+        "Mini Fridge",
+        "Study Table",
+        "Sofa Seating Area",
+        "Fruit Basket",
+        "A/C",
+      ],
+    },
   });
 
   const [cmsSettings, setCmsSettings] = useState<Record<string, string>>({});
@@ -139,13 +179,41 @@ export default function Home() {
           if (d.success && d.rooms) {
             const rates: Record<string, { single: number; double: number }> = {};
             const statuses: Record<string, string> = {};
+            const detailsMap: Record<string, any> = {};
+
             d.rooms.forEach((r: any) => {
               const key = r.type.toLowerCase().replace("royal_suite", "royal");
               rates[key] = { single: r.basePriceSingle, double: r.basePriceDouble };
               statuses[key] = r.status;
+              detailsMap[key] = {
+                name: r.name,
+                single: r.basePriceSingle,
+                double: r.basePriceDouble,
+                status: r.status,
+                description: r.description,
+                amenities: Array.isArray(r.amenities) && r.amenities.length > 0
+                  ? r.amenities.map((a: any) => (typeof a === "string" ? a : a.amenityName))
+                  : [],
+              };
             });
+
             setRoomRates((prev) => ({ ...prev, ...rates }));
             setRoomStatuses((prev) => ({ ...prev, ...statuses }));
+            setRoomsData((prev) => {
+              const next = { ...prev };
+              Object.keys(detailsMap).forEach((k) => {
+                if (next[k]) {
+                  next[k] = {
+                    ...next[k],
+                    ...detailsMap[k],
+                    amenities: detailsMap[k].amenities.length > 0 ? detailsMap[k].amenities : next[k].amenities,
+                  };
+                } else {
+                  next[k] = detailsMap[k];
+                }
+              });
+              return next;
+            });
           }
         })
         .catch(console.error);
@@ -572,7 +640,7 @@ export default function Home() {
               <div className="relative h-[280px] w-full overflow-hidden">
                 <Image
                   src="/images/executive/Room-001.jpg"
-                  alt="Executive Room"
+                  alt={roomsData.executive.name}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                   sizes="(max-width: 1024px) 100vw, 33vw"
@@ -585,40 +653,40 @@ export default function Home() {
                   <div className="flex justify-between items-baseline gap-2">
                     <div className="flex items-center gap-2">
                       <h3 className="font-serif text-xl md:text-2xl text-gold-50 font-medium tracking-wide">
-                        Executive Room
+                        {roomsData.executive.name}
                       </h3>
-                      {roomStatuses.executive && (
+                      {roomsData.executive.status && (
                         <span
                           className={`text-[9px] uppercase tracking-wider px-2 py-0.5 rounded font-mono font-semibold border ${
-                            roomStatuses.executive === "AVAILABLE"
+                            roomsData.executive.status === "AVAILABLE"
                               ? "bg-emerald-950/60 text-emerald-300 border-emerald-500/30"
-                              : roomStatuses.executive === "OCCUPIED"
+                              : roomsData.executive.status === "OCCUPIED"
                               ? "bg-red-950/60 text-red-300 border-red-500/30"
                               : "bg-amber-950/60 text-amber-300 border-amber-500/30"
                           }`}
                         >
-                          {roomStatuses.executive}
+                          {roomsData.executive.status}
                         </span>
                       )}
                     </div>
                     <div className="text-right">
                       <p className="text-gold-300 font-sans text-lg font-semibold">
-                        ₹{roomRates.executive.single.toLocaleString()} <span className="text-[10px] text-gold-200/50 font-sans font-normal">/ Single</span>
+                        ₹{roomsData.executive.single.toLocaleString()} <span className="text-[10px] text-gold-200/50 font-sans font-normal">/ Single</span>
                       </p>
                       <p className="text-gold-200/60 font-sans text-xs">
-                        ₹{roomRates.executive.double.toLocaleString()} <span className="text-[9px] text-gold-200/40 font-sans font-normal">/ Double</span>
+                        ₹{roomsData.executive.double.toLocaleString()} <span className="text-[9px] text-gold-200/40 font-sans font-normal">/ Double</span>
                       </p>
                     </div>
                   </div>
 
                   <p className="text-gold-200/60 text-xs leading-relaxed">
-                    Good for solo travellers and short business trips.
+                    {roomsData.executive.description}
                   </p>
 
                   <div className="pt-2">
                     <p className="text-[10px] text-gold-200/40 uppercase tracking-widest mb-2 font-semibold">Includes</p>
                     <div className="flex flex-wrap gap-2">
-                      {["Standard Bed", "Study Table", "Fruit Basket", "TV", "Large Wardrobe", "A/C"].map((tag) => (
+                      {roomsData.executive.amenities.map((tag) => (
                         <span key={tag} className="text-[9px] bg-brown-900/5 border border-gold-400/5 text-gold-200/70 py-1 px-2.5 rounded-md">
                           {tag}
                         </span>
@@ -643,7 +711,7 @@ export default function Home() {
               <div className="relative h-[280px] w-full overflow-hidden">
                 <Image
                   src="/images/deluxe/Delux001.jpg"
-                  alt="Deluxe Room"
+                  alt={roomsData.deluxe.name}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                   sizes="(max-width: 1024px) 100vw, 33vw"
@@ -656,40 +724,40 @@ export default function Home() {
                   <div className="flex justify-between items-baseline gap-2">
                     <div className="flex items-center gap-2">
                       <h3 className="font-serif text-xl md:text-2xl text-gold-50 font-medium tracking-wide">
-                        Deluxe Room
+                        {roomsData.deluxe.name}
                       </h3>
-                      {roomStatuses.deluxe && (
+                      {roomsData.deluxe.status && (
                         <span
                           className={`text-[9px] uppercase tracking-wider px-2 py-0.5 rounded font-mono font-semibold border ${
-                            roomStatuses.deluxe === "AVAILABLE"
+                            roomsData.deluxe.status === "AVAILABLE"
                               ? "bg-emerald-950/60 text-emerald-300 border-emerald-500/30"
-                              : roomStatuses.deluxe === "OCCUPIED"
+                              : roomsData.deluxe.status === "OCCUPIED"
                               ? "bg-red-950/60 text-red-300 border-red-500/30"
                               : "bg-amber-950/60 text-amber-300 border-amber-500/30"
                           }`}
                         >
-                          {roomStatuses.deluxe}
+                          {roomsData.deluxe.status}
                         </span>
                       )}
                     </div>
                     <div className="text-right">
                       <p className="text-gold-300 font-sans text-lg font-semibold">
-                        ₹{roomRates.deluxe.single.toLocaleString()} <span className="text-[10px] text-gold-200/50 font-sans font-normal">/ Single</span>
+                        ₹{roomsData.deluxe.single.toLocaleString()} <span className="text-[10px] text-gold-200/50 font-sans font-normal">/ Single</span>
                       </p>
                       <p className="text-gold-200/60 font-sans text-xs">
-                        ₹{roomRates.deluxe.double.toLocaleString()} <span className="text-[9px] text-gold-200/40 font-sans font-normal">/ Double</span>
+                        ₹{roomsData.deluxe.double.toLocaleString()} <span className="text-[9px] text-gold-200/40 font-sans font-normal">/ Double</span>
                       </p>
                     </div>
                   </div>
 
                   <p className="text-gold-200/60 text-xs leading-relaxed">
-                    More space and a pocket-spring bed.
+                    {roomsData.deluxe.description}
                   </p>
 
                   <div className="pt-2">
                     <p className="text-[10px] text-gold-200/40 uppercase tracking-widest mb-2 font-semibold">Includes</p>
                     <div className="flex flex-wrap gap-2">
-                      {["Pocket Spring Bed", "Study Table", "Fruit Basket", "TV", "Large Wardrobe", "A/C"].map((tag) => (
+                      {roomsData.deluxe.amenities.map((tag) => (
                         <span key={tag} className="text-[9px] bg-brown-900/5 border border-gold-400/5 text-gold-200/70 py-1 px-2.5 rounded-md">
                           {tag}
                         </span>
@@ -714,7 +782,7 @@ export default function Home() {
               <div className="relative h-[280px] w-full overflow-hidden">
                 <Image
                   src="/images/suite/SR001.jpg"
-                  alt="Royal Suite Room"
+                  alt={roomsData.royal.name}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                   sizes="(max-width: 1024px) 100vw, 33vw"
@@ -727,37 +795,37 @@ export default function Home() {
                   <div className="flex justify-between items-baseline gap-2">
                     <div className="flex items-center gap-2">
                       <h3 className="font-serif text-xl md:text-2xl text-gold-50 font-medium tracking-wide">
-                        Royal Suite
+                        {roomsData.royal.name}
                       </h3>
-                      {roomStatuses.royal && (
+                      {roomsData.royal.status && (
                         <span
                           className={`text-[9px] uppercase tracking-wider px-2 py-0.5 rounded font-mono font-semibold border ${
-                            roomStatuses.royal === "AVAILABLE"
+                            roomsData.royal.status === "AVAILABLE"
                               ? "bg-emerald-950/60 text-emerald-300 border-emerald-500/30"
-                              : roomStatuses.royal === "OCCUPIED"
+                              : roomsData.royal.status === "OCCUPIED"
                               ? "bg-red-950/60 text-red-300 border-red-500/30"
                               : "bg-amber-950/60 text-amber-300 border-amber-500/30"
                           }`}
                         >
-                          {roomStatuses.royal}
+                          {roomsData.royal.status}
                         </span>
                       )}
                     </div>
                     <div className="text-right">
                       <p className="text-gold-300 font-sans text-xl font-semibold">
-                        ₹{roomRates.royal.single.toLocaleString()} <span className="text-[10px] text-gold-200/50 font-sans font-normal">/ Suite</span>
+                        ₹{roomsData.royal.single.toLocaleString()} <span className="text-[10px] text-gold-200/50 font-sans font-normal">/ Suite</span>
                       </p>
                     </div>
                   </div>
 
                   <p className="text-gold-200/60 text-xs leading-relaxed">
-                    Separate bedroom and living room with two washrooms.
+                    {roomsData.royal.description}
                   </p>
 
                   <div className="pt-2">
                     <p className="text-[10px] text-gold-200/40 uppercase tracking-widest mb-2 font-semibold">Includes</p>
                     <div className="flex flex-wrap gap-2">
-                      {["Bedroom + Living Room", "Double Washroom", "Mini Fridge", "Study Table", "Sofa Seating Area", "Fruit Basket", "A/C"].map((tag) => (
+                      {roomsData.royal.amenities.map((tag) => (
                         <span key={tag} className="text-[9px] bg-brown-900/5 border border-gold-400/5 text-gold-200/70 py-1 px-2.5 rounded-md">
                           {tag}
                         </span>

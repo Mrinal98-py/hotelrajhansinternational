@@ -2,19 +2,48 @@ import type { MetadataRoute } from "next";
 import { HOTEL_INFO } from "@/lib/seo";
 
 export default function robots(): MetadataRoute.Robots {
+  const baseUrl = HOTEL_INFO.url;
+
   return {
     rules: [
       {
         userAgent: "*",
-        allow: "/",
+        allow: [
+          "/",
+          "/images/",
+          "/_next/static/",
+        ],
         disallow: [
           "/admin",
           "/admin/",
           "/api/",
-          "/admin/login",
+          "/invoice/",
+        ],
+      },
+      {
+        userAgent: "Googlebot",
+        allow: [
+          "/",
+          "/images/",
+          "/_next/static/",
+        ],
+        disallow: [
+          "/admin/",
+          "/api/",
+          "/invoice/",
+        ],
+      },
+      {
+        userAgent: "Googlebot-Image",
+        allow: [
+          "/images/",
         ],
       },
     ],
-    sitemap: `${HOTEL_INFO.url}/sitemap.xml`,
+    sitemap: [
+      `${baseUrl}/sitemap.xml`,
+      `${baseUrl}/sitemap.txt`,
+    ],
+    host: baseUrl,
   };
 }

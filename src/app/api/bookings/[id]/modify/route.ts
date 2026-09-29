@@ -162,6 +162,19 @@ export async function POST(
             notes: `Transferred via modification (${reason})`,
           },
         });
+
+        if (booking.assignedRoomId) {
+          await tx.roomTransfer.create({
+            data: {
+              bookingId: booking.id,
+              fromPhysicalRoomId: booking.assignedRoomId,
+              toPhysicalRoomId: physicalRoomId,
+              reason: "GUEST_REQUEST",
+              notes: `Transferred via modification (${reason})`,
+              performedBy: currentStaff.name,
+            },
+          });
+        }
       }
 
       // 4. Update Booking

@@ -72,6 +72,18 @@ export async function POST(request: Request) {
       paymentStatus === "SUCCESS" ||
       orderData.order_status === "PAID"
     ) {
+      // Validate payment currency if present in webhook payload
+      if (paymentData?.payment_currency && paymentData.payment_currency.toUpperCase() !== "INR") {
+        console.error("Webhook rejected: non-INR currency", paymentData.payment_currency);
+        return NextResponse.json({ error: "Invalid currency. INR expected." }, { status: 400 });
+      }
+
+      // Validate payment amount if present in webhook payload
+      if (paymentData?.payment_amount !== undefined && Number(paymentData.payment_amount) < booking.netAmount) {
+        console.error("Webhook rejected: payment amount mismatch", paymentData.payment_amount, booking.netAmount);
+        return NextResponse.json({ error: "Payment amount mismatch." }, { status: 400 });
+      }
+
       const paymentMethod = paymentData?.payment_method
         ? Object.keys(paymentData.payment_method)[0]?.toUpperCase()
         : "WEBHOOK";

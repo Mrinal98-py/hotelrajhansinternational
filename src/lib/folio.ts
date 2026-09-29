@@ -188,6 +188,12 @@ export async function recalculateFolioTotals(
       case FolioItemType.REFUND:
         totalPaid -= item.amount; // A refund reduces total payments received
         break;
+
+      case FolioItemType.REVERSAL:
+        // Reversal offsets charges and taxes
+        totalCharges -= item.amount;
+        totalTaxes -= item.taxAmount;
+        break;
     }
   }
 
@@ -217,3 +223,46 @@ export async function recalculateFolioTotals(
 
   return updatedFolio;
 }
+
+/**
+ * Posts an immutable reversal of a previous folio item, preserving full audit history.
+ */
+export async function reverseFolioItem(params: {
+  folioId: string;
+  originalItemId: string;
+  reason: string;
+  reversedBy: string;
+  tx?: Prisma.TransactionClient;
+}) {
+  const client = params.tx || prisma;
+  const originalItem = await client.folioItem.findUnique({
+    where: { id: params.originalItemId },
+  });
+
+  if (!originalItem) {
+    throw new Error(`Folio item ${params.originalItemId} not found`);
+  }
+
+  if (originalItem.folioId !== params.folioId) {
+    throw new Error("Item does not belong to the specified folio");
+  }
+
+  const reversalItem = await addFolioItem(
+    {
+      folioId: params.folioId,
+      itemType: FolioItemType.REVERSAL,
+      description: `REVERSAL of [${originalItem.description}] - Reason: ${params.reason}`,
+      quantity: 1,
+      unitPrice: originalItem.amount,
+      amount: originalItem.amount,
+      taxRate: originalItem.taxRate,
+      taxAmount: originalItem.taxAmount,
+      referenceId: originalItem.id,
+      postedBy: params.reversedBy,
+    },
+    client
+  );
+
+  return reversalItem;
+}
+

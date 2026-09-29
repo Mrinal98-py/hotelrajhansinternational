@@ -8,6 +8,8 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "validate:db": "npx tsx scripts/validate-database-inventory.ts",
     "test": "npx tsx tests/run-all-tests.ts"
   },
   "dependencies": {

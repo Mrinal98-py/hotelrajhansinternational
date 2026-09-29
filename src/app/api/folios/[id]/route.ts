@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { apiError, apiSuccess, authorizeRole, requireAuth } from "@/lib/security";
-import { addFolioItem, recalculateFolioTotals } from "@/lib/folio";
+import { addFolioItem, recalculateFolioTotals, reverseFolioItem } from "@/lib/folio";
 import { FolioItemType, PaymentMethod, PaymentStatus } from "@prisma/client";
 
 export const revalidate = 0;
@@ -73,14 +73,6 @@ export async function POST(
       paymentMethod, // When itemType === 'PAYMENT'
     } = body;
 
-    if (!itemType || !description || unitPrice === undefined) {
-      return apiError(
-        "VALIDATION_ERROR",
-        "itemType, description, and unitPrice are required.",
-        400
-      );
-    }
-
     const folio = await prisma.folio.findFirst({
       where: { OR: [{ id }, { bookingId: id }, { folioNumber: id }] },
       include: { booking: true },
@@ -88,6 +80,56 @@ export async function POST(
 
     if (!folio) {
       return apiError("NOT_FOUND", "Folio not found", 404);
+    }
+
+    // Action: REVERSE existing folio item
+    if (body.action === "REVERSE") {
+      const { originalItemId, reason = "Correction" } = body;
+      if (!originalItemId) {
+        return apiError("VALIDATION_ERROR", "originalItemId is required for reversal", 400);
+      }
+
+      const reversalResult = await prisma.$transaction(async (tx) => {
+        const revItem = await reverseFolioItem({
+          folioId: folio.id,
+          originalItemId,
+          reason,
+          reversedBy: currentStaff.name,
+          tx,
+        });
+
+        await tx.auditLog.create({
+          data: {
+            userId: currentStaff.userId,
+            userName: currentStaff.name,
+            action: "FOLIO_ITEM_REVERSED",
+            entity: "Folio",
+            entityId: folio.id,
+            details: `Reversed item ${originalItemId} on folio ${folio.folioNumber}: ${reason}`,
+          },
+        });
+
+        const refreshed = await tx.folio.findUnique({
+          where: { id: folio.id },
+          include: { items: true },
+        });
+
+        return { revItem, refreshed };
+      });
+
+      return apiSuccess({
+        message: "Folio item successfully reversed",
+        item: reversalResult.revItem,
+        folio: reversalResult.refreshed,
+      });
+    }
+
+    if (!itemType || !description || unitPrice === undefined) {
+      return apiError(
+        "VALIDATION_ERROR",
+        "itemType, description, and unitPrice are required.",
+        400
+      );
     }
 
     const cleanPrice = parseFloat(unitPrice);

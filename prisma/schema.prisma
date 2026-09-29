@@ -126,6 +126,15 @@ enum FolioItemType {
   ADJUSTMENT
   PAYMENT
   REFUND
+  REVERSAL
+}
+
+enum TransferReason {
+  GUEST_REQUEST
+  MAINTENANCE
+  UPGRADE
+  OPERATIONAL
+  OTHER
 }
 
 enum RefundStatus {
@@ -385,6 +394,8 @@ model PhysicalRoom {
   housekeepingTasks   HousekeepingTask[]
   maintenanceTickets  MaintenanceTicket[]
   roomBlocks          RoomBlock[]
+  transfersFrom       RoomTransfer[]     @relation("TransferFrom")
+  transfersTo         RoomTransfer[]     @relation("TransferTo")
 
   @@index([roomTypeId, status])
   @@index([housekeepingStatus])
@@ -423,6 +434,25 @@ model RoomAssignment {
 
   @@index([physicalRoomId, status])
   @@index([bookingId])
+}
+
+model RoomTransfer {
+  id                 String         @id @default(uuid())
+  bookingId          String
+  fromPhysicalRoomId String
+  toPhysicalRoomId   String
+  reason             TransferReason @default(GUEST_REQUEST)
+  notes              String?
+  performedBy        String?
+  createdAt          DateTime       @default(now())
+
+  booking            Booking        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  fromPhysicalRoom   PhysicalRoom   @relation("TransferFrom", fields: [fromPhysicalRoomId], references: [id])
+  toPhysicalRoom     PhysicalRoom   @relation("TransferTo", fields: [toPhysicalRoomId], references: [id])
+
+  @@index([bookingId])
+  @@index([fromPhysicalRoomId])
+  @@index([toPhysicalRoomId])
 }
 
 model Availability {
@@ -525,6 +555,10 @@ model Booking {
   assignedRoomId     String?               // Current active PhysicalRoom ID
   checkIn            DateTime
   checkOut           DateTime
+  scheduledCheckIn   DateTime?             // Scheduled arrival date/time
+  scheduledCheckOut  DateTime?             // Scheduled departure date/time
+  actualCheckInAt    DateTime?             // Timestamp of actual guest check-in
+  actualCheckOutAt   DateTime?             // Timestamp of actual guest checkout
   guestsCount        Int                   @default(2)
   adults             Int                   @default(2)
   children           Int                   @default(0)
@@ -545,6 +579,7 @@ model Booking {
   room               Room                  @relation(fields: [roomId], references: [id])
   payments           Payment[]
   roomAssignments    RoomAssignment[]
+  transfers          RoomTransfer[]
   guests             BookingGuest[]
   folio              Folio?
   refunds            Refund[]

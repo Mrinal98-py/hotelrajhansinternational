@@ -209,7 +209,7 @@ export default function AdminRoomInventoryCalendarPage() {
         r.roomType?.name.toLowerCase().includes(searchRoom.toLowerCase());
       return matchesSearch;
     });
-  }, [data?.rooms, searchRoom]);
+  }, [data, searchRoom]);
 
   // Group rooms by category
   const roomsByCategory = useMemo(() => {

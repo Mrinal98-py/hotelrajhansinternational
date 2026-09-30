@@ -154,22 +154,25 @@ assert.strictEqual(notFoundMetadata.alternates?.canonical, undefined, "NotFound 
 console.log("✔ Admin layout and 404 error page verified as noindex, nofollow without public canonical.");
 
 // 6. Redirect Consistency
-if (nextConfig.redirects) {
-  const redirectsPromise = nextConfig.redirects();
-  redirectsPromise.then((redirects: any[]) => {
-    const offersRedirect = redirects.find((r: any) => r.source === "/offers");
+async function checkRedirects() {
+  if (nextConfig.redirects) {
+    const redirects = await nextConfig.redirects();
+    const offersRedirect = (redirects as any[]).find((r: any) => r.source === "/offers");
     assert.ok(offersRedirect, "/offers redirect must exist");
     assert.strictEqual(offersRedirect.destination, "/", "/offers must redirect to root /");
     assert.strictEqual(offersRedirect.permanent, true, "/offers redirect must be permanent (301)");
 
-    const attractionRedirect = redirects.find((r: any) => r.source === "/attraction");
+    const attractionRedirect = (redirects as any[]).find((r: any) => r.source === "/attraction");
     assert.ok(attractionRedirect, "/attraction redirect must exist");
     assert.strictEqual(attractionRedirect.destination, "/attractions", "/attraction must redirect to /attractions");
     assert.strictEqual(attractionRedirect.permanent, true, "/attraction redirect must be permanent (301)");
 
     console.log("✔ Redirect consistency verified (no canonical/redirect loops).");
-    console.log("🎉 ALL CANONICAL SEO & METADATA TESTS PASSED SUCCESSFULLY!");
-  });
-} else {
+  }
   console.log("🎉 ALL CANONICAL SEO & METADATA TESTS PASSED SUCCESSFULLY!");
 }
+
+checkRedirects().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

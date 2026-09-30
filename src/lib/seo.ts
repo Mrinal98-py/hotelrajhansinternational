@@ -1,8 +1,140 @@
+import type { Metadata } from "next";
+
+export const PRODUCTION_DOMAIN = "https://hotelrajhansinternational.com";
+
+/**
+ * Get sanitized base URL from environment variables.
+ * Priority: NEXT_PUBLIC_SITE_URL > NEXT_PUBLIC_APP_URL > PRODUCTION_DOMAIN
+ */
+export function getSiteUrl(): string {
+  const envUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    PRODUCTION_DOMAIN;
+
+  let url = envUrl.trim();
+
+  // If in production mode or if env URL points to local, ensure production domain is used for canonical SEO
+  if (
+    process.env.NODE_ENV === "production" &&
+    (url.includes("localhost") || url.includes("127.0.0.1") || url.includes(".vercel.app"))
+  ) {
+    url = process.env.NEXT_PUBLIC_SITE_URL || PRODUCTION_DOMAIN;
+  }
+
+  if (!/^https?:\/\//i.test(url)) {
+    url = `https://${url}`;
+  }
+
+  // Remove trailing slashes from base URL
+  return url.replace(/\/+$/, "");
+}
+
+/**
+ * Returns exact canonical URL according to SEO rules:
+ * - Root path -> https://hotelrajhansinternational.com/ (with trailing slash)
+ * - Subpaths -> https://hotelrajhansinternational.com/path (NO trailing slash)
+ * - Strips query parameters (?utm_source=..., ?category=..., ?checkIn=...)
+ * - Strips hash anchors (#...)
+ * - Collapses duplicate slashes
+ */
+export function getCanonicalUrl(path?: string): string {
+  const siteUrl = getSiteUrl();
+
+  if (!path || path === "/" || path.trim() === "") {
+    return `${siteUrl}/`;
+  }
+
+  // Strip query string and hash
+  const pathWithoutQuery = path.split("?")[0].split("#")[0].trim();
+
+  // Collapse multiple slashes
+  const collapsed = pathWithoutQuery.replace(/\/+/g, "/");
+
+  // Remove leading and trailing slashes for subpaths
+  const trimmed = collapsed.replace(/^\/+/, "").replace(/\/+$/, "");
+
+  if (!trimmed) {
+    return `${siteUrl}/`;
+  }
+
+  return `${siteUrl}/${trimmed}`;
+}
+
+export interface PageMetadataOptions {
+  title: string;
+  description: string;
+  path: string;
+  keywords?: string[];
+  image?: string;
+}
+
+export function createPageMetadata({
+  title,
+  description,
+  path,
+  keywords,
+  image,
+}: PageMetadataOptions): Metadata {
+  const canonical = getCanonicalUrl(path);
+  const siteUrl = getSiteUrl();
+  const ogImage = image
+    ? image.startsWith("http")
+      ? image
+      : `${siteUrl}${image.startsWith("/") ? "" : "/"}${image}`
+    : `${siteUrl}/images/reception/Reception001.jpg`;
+
+  return {
+    title,
+    description,
+    ...(keywords ? { keywords } : {}),
+    alternates: {
+      canonical,
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      siteName: HOTEL_INFO.name,
+      locale: "en_IN",
+      type: "website",
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 800,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImage],
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
+  };
+}
+
+export function createNoIndexMetadata(title?: string): Metadata {
+  return {
+    title: title ? `${title} | HMS Admin` : "Admin Console | Hotel Rajhans International",
+    robots: {
+      index: false,
+      follow: false,
+    },
+  };
+}
+
 export const HOTEL_INFO = {
   name: "Hotel Rajhans International",
   legalName: "Takshshila Regency Pvt. Ltd.",
   description: "Premier luxury hotel in Bhagalpur, Bihar offering AC Executive, AC Deluxe, and Royal Suite rooms, fine dining at Takshshila Restaurant, 24/7 room service, banquet hall, and secure on-site parking at Kachari Chowk, MG Road.",
-  url: process.env.NEXT_PUBLIC_APP_URL || "https://hotelrajhansinternational.com",
+  url: getSiteUrl(),
   telephone: "+91 93081 89201",
   telephoneLandline: "+91 641 240 9411",
   email: "info@hotelrajhansinternational.com",
@@ -32,11 +164,6 @@ export const HOTEL_INFO = {
     "/images/restaurant/R001.jpg",
   ],
 };
-
-export function getCanonicalUrl(path: string): string {
-  const cleanPath = path.startsWith("/") ? path : `/${path}`;
-  return `${HOTEL_INFO.url}${cleanPath}`;
-}
 
 export function generateHotelSchema() {
   return {
@@ -132,16 +259,29 @@ export function generateRoomSchema(room: {
   };
 }
 
-export function generateBreadcrumbSchema(items: { name: string; url: string }[]) {
+export function generateBreadcrumbSchema(
+  items: { name: string; url?: string }[],
+  currentPath?: string
+) {
+  const baseUrl = HOTEL_INFO.url.replace(/\/$/, "");
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    itemListElement: items.map((item, index) => ({
-      "@type": "ListItem",
-      position: index + 1,
-      name: item.name,
-      item: `${HOTEL_INFO.url}${item.url}`,
-    })),
+    itemListElement: items.map((item, index) => {
+      const isLast = index === items.length - 1;
+      const rawPath = item.url || (isLast && currentPath ? currentPath : "");
+      const cleanPath = rawPath
+        ? rawPath.startsWith("/")
+          ? rawPath
+          : `/${rawPath}`
+        : "/";
+      return {
+        "@type": "ListItem",
+        position: index + 1,
+        name: item.name,
+        item: `${baseUrl}${cleanPath === "/" ? "" : cleanPath}`,
+      };
+    }),
   };
 }
 

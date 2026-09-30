@@ -127,12 +127,13 @@ export default async function AcDeluxePage() {
       {/* Header Banner */}
       <section className="bg-gradient-to-b from-brown-950 via-brown-900 to-brown-950 text-cream py-10 px-6 border-b border-gold-400/20">
         <div className="max-w-6xl mx-auto">
-          <div className="text-gold-200/80 mb-3">
+          <div className="mb-3">
             <Breadcrumbs
               items={[
                 { name: "Rooms & Suites", url: "/rooms" },
-                { name: "AC Deluxe" },
+                { name: "AC Deluxe", url: "/rooms/ac-deluxe" },
               ]}
+              currentUrl="/rooms/ac-deluxe"
             />
           </div>
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
@@ -370,6 +371,13 @@ export default async function AcDeluxePage() {
                     <div className="text-[11px] text-brown-600">Separate bedroom, lounge & 2 washrooms</div>
                   </Link>
                 </div>
+                <Link
+                  href="/rooms"
+                  className="mt-4 pt-3 border-t border-brown-900/10 text-xs font-semibold text-brown-800 hover:text-brown-950 inline-flex items-center gap-1.5 hover:underline"
+                >
+                  <ArrowRight className="h-3 w-3 text-gold-600" />
+                  <span>View All Rooms Overview</span>
+                </Link>
               </div>
             </div>
           </aside>

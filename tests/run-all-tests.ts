@@ -10,6 +10,7 @@ const testSuites = [
   { name: "Payment Confirmation & Booking Pipeline Tests", file: "tests/payment-confirm.test.ts" },
   { name: "End-to-End Hotel Guest & Operational Lifecycle Test", file: "tests/end-to-end-lifecycle.test.ts" },
   { name: "Physical Room Double-Booking Concurrency Stress Tests", file: "tests/concurrency.test.ts" },
+  { name: "Canonical SEO Tags & Indexability Suite", file: "tests/seo-canonical.test.ts" },
 ];
 
 console.log("================================================================================");

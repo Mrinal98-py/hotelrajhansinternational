@@ -87,8 +87,11 @@ export default function ServicesPage() {
       {/* Header Banner */}
       <section className="bg-gradient-to-b from-brown-950 via-brown-900 to-brown-950 text-cream py-14 px-6 border-b border-gold-400/20">
         <div className="max-w-6xl mx-auto">
-          <div className="text-gold-200/80 mb-3">
-            <Breadcrumbs items={[{ name: "Services" }]} />
+          <div className="mb-3">
+            <Breadcrumbs
+              items={[{ name: "Services", url: "/services" }]}
+              currentUrl="/services"
+            />
           </div>
           <span className="text-[11px] uppercase tracking-[0.25em] font-mono text-gold-400 font-bold block mb-2">
             Hospitality & Facilities

@@ -93,8 +93,11 @@ export default function LocationPage() {
       {/* Header Banner */}
       <section className="bg-gradient-to-b from-brown-950 via-brown-900 to-brown-950 text-cream py-14 px-6 border-b border-gold-400/20">
         <div className="max-w-6xl mx-auto">
-          <div className="text-gold-200/80 mb-3">
-            <Breadcrumbs items={[{ name: "Location & Directions" }]} />
+          <div className="mb-3">
+            <Breadcrumbs
+              items={[{ name: "Location & Directions", url: "/location" }]}
+              currentUrl="/location"
+            />
           </div>
           <span className="text-[11px] uppercase tracking-[0.25em] font-mono text-gold-400 font-bold block mb-2">
             Prime Central Address

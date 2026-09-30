@@ -9,7 +9,7 @@ import { CalendarCheck, Phone } from "lucide-react";
 export const metadata: Metadata = {
   title: "Photo Gallery | Hotel Rajhans International Bhagalpur",
   description:
-    "Browse authentic high-resolution photographs of AC Executive rooms, AC Deluxe rooms, Royal Suites, Takshshila Restaurant, reception lobby, and facilities at Hotel Rajhans International, Bhagalpur.",
+    "Browse authentic high-resolution photographs of AC Executive rooms, AC Deluxe rooms, Royal Suites, AC Dormitory, Takshshila Restaurant, reception lobby, and facilities at Hotel Rajhans International, Bhagalpur.",
   alternates: {
     canonical: getCanonicalUrl("/gallery"),
   },
@@ -49,7 +49,7 @@ export default function GalleryPage() {
             Hotel Rajhans International Photo Gallery
           </h1>
           <p className="text-sm sm:text-base text-cream-soft/80 max-w-2xl leading-relaxed">
-            Take a visual tour through our guest accommodation, royal suites, Takshshila dining
+            Take a visual tour through our guest accommodation, royal suites, AC dormitory, Takshshila dining
             restaurant, front reception lounge, and on-premises facilities in Bhagalpur.
           </p>
         </div>

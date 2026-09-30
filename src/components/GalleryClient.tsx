@@ -12,7 +12,7 @@ import {
 
 export interface GalleryPhoto {
   src: string;
-  category: "all" | "executive" | "deluxe" | "royal" | "restaurant" | "hotel" | "facilities" | "parlour";
+  category: "all" | "executive" | "deluxe" | "royal" | "dormitory" | "restaurant" | "hotel" | "facilities" | "parlour";
   categoryLabel: string;
   alt: string;
   title: string;
@@ -20,130 +20,132 @@ export interface GalleryPhoto {
 }
 
 const GALLERY_PHOTOS: GalleryPhoto[] = [
-  // AC Executive
+  // AC Executive (3 unique photos)
   {
     src: "/images/executive/Room-001.jpg",
     category: "executive",
     categoryLabel: "AC Executive",
-    alt: "AC Executive Room standard queen bed and bedhead at Hotel Rajhans",
-    title: "AC Executive Room Comfort Bed",
+    alt: "AC Executive room window view with seating chairs, table and work desk",
+    title: "Executive Room Seating & Window View",
     aspect: "wide",
   },
   {
-    src: "/images/executive/Room-002.jpg",
+    src: "/images/executive/Room-005.jpg",
     category: "executive",
     categoryLabel: "AC Executive",
-    alt: "AC Executive Room executive study desk and work lamp",
-    title: "Executive Work Desk & Study Area",
-    aspect: "square",
+    alt: "AC Executive twin beds with padded headboards and decorative wallpaper",
+    title: "AC Executive Twin Beds",
+    aspect: "wide",
   },
   {
-    src: "/images/executive/Room-003.jpg",
+    src: "/images/executive/Room-006.jpg",
     category: "executive",
     categoryLabel: "AC Executive",
-    alt: "AC Executive Room spacious wardrobe and luggage rack",
-    title: "In-Room Wardrobe & Storage",
-    aspect: "tall",
-  },
-  {
-    src: "/images/executive/Room-004.jpg",
-    category: "executive",
-    categoryLabel: "AC Executive",
-    alt: "AC Executive Room attached en-suite bathroom with shower",
-    title: "En-suite Bathroom & Toiletries",
-    aspect: "square",
+    alt: "AC Executive room layout showing split air conditioner and dressing mirror",
+    title: "Executive Twin Bed Layout & Split AC",
+    aspect: "wide",
   },
 
-  // AC Deluxe
+  // AC Deluxe (2 unique photos)
   {
     src: "/images/deluxe/Delux001.jpg",
     category: "deluxe",
     categoryLabel: "AC Deluxe",
-    alt: "AC Deluxe Room pocket-spring orthopedic mattress and bedding",
-    title: "AC Deluxe Pocket-Spring Bed",
+    alt: "AC Deluxe room plush king bed with tufted headboard and natural window light",
+    title: "AC Deluxe King Bed",
     aspect: "wide",
-  },
-  {
-    src: "/images/deluxe/Delux002.jpg",
-    category: "deluxe",
-    categoryLabel: "AC Deluxe",
-    alt: "AC Deluxe Room seating area with coffee table",
-    title: "Deluxe Seating Area & Room Layout",
-    aspect: "square",
   },
   {
     src: "/images/deluxe/Delux003.jpg",
     category: "deluxe",
     categoryLabel: "AC Deluxe",
-    alt: "AC Deluxe Room ambient lighting and wall paneling",
-    title: "Deluxe Bedroom Interior Design",
-    aspect: "tall",
-  },
-  {
-    src: "/images/deluxe/Delux004.jpg",
-    category: "deluxe",
-    categoryLabel: "AC Deluxe",
-    alt: "AC Deluxe Room private attached washroom with fixtures",
-    title: "Deluxe Private Bathroom",
-    aspect: "square",
+    alt: "AC Deluxe room interior view with split AC, side table and wooden flooring",
+    title: "Deluxe Room Interior & Split AC",
+    aspect: "wide",
   },
 
-  // Royal Suite
+  // Royal Suite (6 distinct rooms and perspectives)
   {
     src: "/images/suite/SR001.jpg",
     category: "royal",
     categoryLabel: "Royal Suite",
-    alt: "Royal Suite master bedroom with plush king-sized bed",
+    alt: "Royal Suite master bedroom king-sized bed with towel art and wooden door",
     title: "Royal Suite Master Bedroom",
     aspect: "wide",
-  },
-  {
-    src: "/images/suite/SR002.jpg",
-    category: "royal",
-    categoryLabel: "Royal Suite",
-    alt: "Royal Suite separate furnished living lounge with sofas",
-    title: "Private Living Room Lounge",
-    aspect: "wide",
-  },
-  {
-    src: "/images/suite/SR003.jpg",
-    category: "royal",
-    categoryLabel: "Royal Suite",
-    alt: "Royal Suite study desk and in-room mini refrigerator",
-    title: "Suite Workstation & Mini Refrigerator",
-    aspect: "square",
-  },
-  {
-    src: "/images/suite/SR004.jpg",
-    category: "royal",
-    categoryLabel: "Royal Suite",
-    alt: "Royal Suite first master en-suite washroom",
-    title: "Suite Master Bathroom",
-    aspect: "tall",
   },
   {
     src: "/images/suite/SR005.jpg",
     category: "royal",
     categoryLabel: "Royal Suite",
-    alt: "Royal Suite sofa seating corner and ambient interior",
-    title: "Suite Sofa Seating Corner",
-    aspect: "square",
+    alt: "Royal Suite private living lounge with comfortable armchairs and wall artwork",
+    title: "Private Living Lounge",
+    aspect: "wide",
   },
   {
-    src: "/images/suite/SR006.jpg",
+    src: "/images/suite/SR008.jpg",
     category: "royal",
     categoryLabel: "Royal Suite",
-    alt: "Royal Suite dual-room layout connecting bedroom and lounge",
-    title: "Connected Dual-Room Layout",
+    alt: "Royal Suite dedicated study desk, workstation chair and luggage rack",
+    title: "Suite Workstation & Study Desk",
+    aspect: "wide",
+  },
+  {
+    src: "/images/suite/SR009.jpg",
+    category: "royal",
+    categoryLabel: "Royal Suite",
+    alt: "Royal Suite handcrafted wooden wardrobe closet and full-length dressing mirror",
+    title: "Wooden Wardrobe & Dressing Area",
+    aspect: "wide",
+  },
+  {
+    src: "/images/suite/SR004.jpg",
+    category: "royal",
+    categoryLabel: "Royal Suite",
+    alt: "Royal Suite en-suite bathroom with granite vanity counter, mirror and geyser",
+    title: "Master Bathroom with Geyser",
+    aspect: "tall",
+  },
+  {
+    src: "/images/suite/SR011.jpg",
+    category: "royal",
+    categoryLabel: "Royal Suite",
+    alt: "Royal Suite master bed side angle featuring large picture window",
+    title: "Master Bed & Window View",
     aspect: "wide",
   },
 
-  // Takshshila Restaurant
+  // AC Dormitory (3 unique photos)
+  {
+    src: "/images/dormitory/DM005.jpg",
+    category: "dormitory",
+    categoryLabel: "AC Dormitory",
+    alt: "AC Dormitory individual partitioned beds with linen, pillows and charging points",
+    title: "Individual Partitioned Dormitory Beds",
+    aspect: "wide",
+  },
+  {
+    src: "/images/dormitory/DM006.jpg",
+    category: "dormitory",
+    categoryLabel: "AC Dormitory",
+    alt: "Spacious AC Dormitory hall with numbered cubicles and under-bed storage",
+    title: "AC Dormitory Hall with Lockers",
+    aspect: "wide",
+  },
+  {
+    src: "/images/dormitory/DM0010.jpg",
+    category: "dormitory",
+    categoryLabel: "AC Dormitory",
+    alt: "Rajhans Tower dormitory entrance with 24/7 heavy-duty power backup generator",
+    title: "Rajhans Tower & Power Facility",
+    aspect: "wide",
+  },
+
+  // Takshshila Restaurant (4 distinct dining perspectives)
   {
     src: "/images/restaurant/R001.jpg",
     category: "restaurant",
     categoryLabel: "Takshshila Restaurant",
-    alt: "Takshshila Restaurant fine dining hall with arranged table settings",
+    alt: "Takshshila Restaurant main dining hall with leather seating and ambient lighting",
     title: "Takshshila Main Dining Hall",
     aspect: "wide",
   },
@@ -151,77 +153,95 @@ const GALLERY_PHOTOS: GalleryPhoto[] = [
     src: "/images/restaurant/R002.jpg",
     category: "restaurant",
     categoryLabel: "Takshshila Restaurant",
-    alt: "Takshshila Restaurant family dining booths and lighting",
-    title: "Family Dining Seating",
-    aspect: "square",
-  },
-  {
-    src: "/images/restaurant/R003.jpg",
-    category: "restaurant",
-    categoryLabel: "Takshshila Restaurant",
-    alt: "Freshly prepared Indian specialty dish presentation",
-    title: "Culinary Presentation",
-    aspect: "tall",
-  },
-  {
-    src: "/images/restaurant/R004.jpg",
-    category: "restaurant",
-    categoryLabel: "Takshshila Restaurant",
-    alt: "Takshshila Restaurant buffet counter and serving area",
-    title: "Buffet & Group Catering Area",
-    aspect: "square",
-  },
-
-  // Reception & Hotel
-  {
-    src: "/images/reception/Reception001.jpg",
-    category: "hotel",
-    categoryLabel: "Hotel & Reception",
-    alt: "Hotel Rajhans International front lobby and reception counter",
-    title: "24/7 Front Desk Reception",
+    alt: "Takshshila Restaurant private dining booth with foliage accent wall",
+    title: "Private Family Dining Booth",
     aspect: "wide",
   },
   {
-    src: "/images/reception/Reception002.jpg",
+    src: "/images/restaurant/R005.jpg",
+    category: "restaurant",
+    categoryLabel: "Takshshila Restaurant",
+    alt: "Takshshila Restaurant celebration table setup with balloon decor",
+    title: "Celebration & Party Dining Setup",
+    aspect: "wide",
+  },
+  {
+    src: "/images/restaurant/R006.jpg",
+    category: "restaurant",
+    categoryLabel: "Takshshila Restaurant",
+    alt: "Reserved long banquet dining table with formal dinner settings",
+    title: "Reserved Banquet Dining Table",
+    aspect: "wide",
+  },
+
+  // Reception & Lobby (3 distinct perspectives)
+  {
+    src: "/images/reception/Reception007.jpg",
     category: "hotel",
-    categoryLabel: "Hotel & Reception",
-    alt: "Lobby waiting lounge with leather seating for arriving guests",
+    categoryLabel: "Reception & Lobby",
+    alt: "Hotel Rajhans International 24/7 front desk with uniformed reception staff",
+    title: "24/7 Front Desk Reception Staff",
+    aspect: "wide",
+  },
+  {
+    src: "/images/reception/Reception006.jpg",
+    category: "hotel",
+    categoryLabel: "Reception & Lobby",
+    alt: "Guest arrival waiting lounge with sofa seating, garden window and newspaper stand",
     title: "Guest Arrival Waiting Lounge",
-    aspect: "square",
-  },
-  {
-    src: "/images/reception/Reception003.jpg",
-    category: "hotel",
-    categoryLabel: "Hotel & Reception",
-    alt: "Hotel Rajhans International reception hallway and elevator foyer",
-    title: "Main Lobby & Foyer",
-    aspect: "tall",
-  },
-
-  // Facilities & Parlour
-  {
-    src: "/images/parlour/BP001.jpg",
-    category: "parlour",
-    categoryLabel: "Beauty Parlour",
-    alt: "On-site beauty parlour styling chairs and mirrors",
-    title: "Beauty Parlour Styling Stations",
-    aspect: "square",
-  },
-  {
-    src: "/images/parlour/BP002.jpg",
-    category: "parlour",
-    categoryLabel: "Beauty Parlour",
-    alt: "Beauty parlour treatment area and care products",
-    title: "Parlour Grooming Area",
     aspect: "wide",
   },
+  {
+    src: "/images/reception/Reception005.jpg",
+    category: "hotel",
+    categoryLabel: "Reception & Lobby",
+    alt: "Spacious main hotel lobby hall with visitor seating and reception counter",
+    title: "Main Lobby & Visitor Hall",
+    aspect: "wide",
+  },
+
+  // Facilities & Sweets (2 unique photos)
   {
     src: "/images/ice-cream/ICP001.jpg",
     category: "facilities",
     categoryLabel: "Facilities",
-    alt: "Hotel ice cream parlour counter and dessert freezer",
-    title: "Ice Cream Parlour Facility",
-    aspect: "square",
+    alt: "Ice and Spice parlour service counter with Amul ice cream freezer and drinks",
+    title: "Ice Cream & Beverage Counter",
+    aspect: "wide",
+  },
+  {
+    src: "/images/ice-cream/ICP004.jpg",
+    category: "facilities",
+    categoryLabel: "Facilities",
+    alt: "Ice Cream Parlour indoor dining area with wooden tables and decorative lighting",
+    title: "Parlour Seating & Dining Area",
+    aspect: "wide",
+  },
+
+  // Beauty Parlour (3 unique photos)
+  {
+    src: "/images/parlour/BP002.jpg",
+    category: "parlour",
+    categoryLabel: "Beauty Parlour",
+    alt: "Rajhans Ladies Beauty Parlour reception desk with attendant and service menu",
+    title: "Beauty Parlour Reception Desk",
+    aspect: "tall",
+  },
+  {
+    src: "/images/parlour/BP011.jpg",
+    category: "parlour",
+    categoryLabel: "Beauty Parlour",
+    alt: "Fully equipped salon floor with styling chairs, hair spa equipment and mirrors",
+    title: "Salon Styling Stations & Hair Spa",
+    aspect: "wide",
+  },
+  {
+    src: "/images/parlour/BP009.jpg",
+    category: "parlour",
+    categoryLabel: "Beauty Parlour",
+    alt: "Beauty parlour client waiting lounge with comfortable leather sofa",
+    title: "Parlour Client Waiting Lounge",
+    aspect: "tall",
   },
 ];
 
@@ -230,8 +250,9 @@ const FILTER_TABS = [
   { id: "executive", label: "AC Executive" },
   { id: "deluxe", label: "AC Deluxe" },
   { id: "royal", label: "Royal Suite" },
-  { id: "restaurant", label: "Restaurant" },
-  { id: "hotel", label: "Reception & Hotel" },
+  { id: "dormitory", label: "AC Dormitory" },
+  { id: "restaurant", label: "Takshshila Restaurant" },
+  { id: "hotel", label: "Reception & Lobby" },
   { id: "facilities", label: "Facilities" },
   { id: "parlour", label: "Beauty Parlour" },
 ];

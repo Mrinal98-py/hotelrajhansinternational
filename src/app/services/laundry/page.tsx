@@ -35,12 +35,13 @@ export default function LaundryServicePage() {
     <PublicLayout>
       <section className="bg-gradient-to-b from-brown-950 via-brown-900 to-brown-950 text-cream py-12 px-6 border-b border-gold-400/20">
         <div className="max-w-6xl mx-auto">
-          <div className="text-gold-200/80 mb-3">
+          <div className="mb-3">
             <Breadcrumbs
               items={[
                 { name: "Services", url: "/services" },
-                { name: "Laundry & Dry Cleaning" },
+                { name: "Laundry & Dry Cleaning", url: "/services/laundry" },
               ]}
+              currentUrl="/services/laundry"
             />
           </div>
           <span className="text-[11px] uppercase tracking-[0.25em] font-mono text-gold-400 font-bold block mb-1">
@@ -138,9 +139,15 @@ export default function LaundryServicePage() {
 
               <Link
                 href="/rooms"
-                className="w-full py-2.5 rounded-xl border border-brown-900/20 hover:bg-brown-900/5 text-brown-900 font-bold text-xs uppercase tracking-wider text-center block transition-colors"
+                className="w-full py-2.5 rounded-xl border border-brown-900/20 hover:bg-brown-900/5 text-brown-900 font-bold text-xs uppercase tracking-wider text-center block transition-colors mb-2"
               >
                 Browse Rooms
+              </Link>
+              <Link
+                href="/services"
+                className="w-full py-2 rounded-xl text-brown-800 hover:text-brown-950 text-xs font-semibold text-center block hover:underline"
+              >
+                ← Back to All Services
               </Link>
             </div>
           </aside>

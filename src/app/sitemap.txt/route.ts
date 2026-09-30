@@ -1,39 +1,39 @@
 import { NextResponse } from "next/server";
-import { HOTEL_INFO } from "@/lib/seo";
+import { getCanonicalUrl } from "@/lib/seo";
 
 export const dynamic = "force-static";
 export const revalidate = 86400; // Cache 24 hours
 
 export async function GET() {
-  const baseUrl = HOTEL_INFO.url;
-
-  const urls = [
-    `${baseUrl}`,
-    `${baseUrl}/rooms`,
-    `${baseUrl}/rooms/ac-executive`,
-    `${baseUrl}/rooms/ac-deluxe`,
-    `${baseUrl}/rooms/royal-suite`,
-    `${baseUrl}/services`,
-    `${baseUrl}/services/room-service`,
-    `${baseUrl}/services/restaurant`,
-    `${baseUrl}/services/laundry`,
-    `${baseUrl}/services/wifi`,
-    `${baseUrl}/restaurant`,
-    `${baseUrl}/facilities`,
-    `${baseUrl}/gallery`,
-    `${baseUrl}/location`,
-    `${baseUrl}/attractions`,
-    `${baseUrl}/attractions/vikramshila`,
-    `${baseUrl}/attractions/mandar-hill`,
-    `${baseUrl}/about`,
-    `${baseUrl}/reviews`,
-    `${baseUrl}/faq`,
-    `${baseUrl}/booking`,
-    `${baseUrl}/contact`,
-    `${baseUrl}/privacy-policy`,
-    `${baseUrl}/terms-and-conditions`,
-    `${baseUrl}/cancellation-policy`,
+  const paths = [
+    "/",
+    "/rooms",
+    "/rooms/ac-executive",
+    "/rooms/ac-deluxe",
+    "/rooms/royal-suite",
+    "/services",
+    "/services/room-service",
+    "/services/restaurant",
+    "/services/laundry",
+    "/services/wifi",
+    "/restaurant",
+    "/facilities",
+    "/gallery",
+    "/location",
+    "/attractions",
+    "/attractions/vikramshila",
+    "/attractions/mandar-hill",
+    "/about",
+    "/reviews",
+    "/faq",
+    "/booking",
+    "/contact",
+    "/privacy-policy",
+    "/terms-and-conditions",
+    "/cancellation-policy",
   ];
+
+  const urls = paths.map((p) => getCanonicalUrl(p));
 
   return new NextResponse(urls.join("\n") + "\n", {
     status: 200,

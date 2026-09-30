@@ -45,12 +45,13 @@ export default function VikramshilaPage() {
     <PublicLayout>
       <section className="bg-gradient-to-b from-brown-950 via-brown-900 to-brown-950 text-cream py-14 px-6 border-b border-gold-400/20">
         <div className="max-w-6xl mx-auto">
-          <div className="text-gold-200/80 mb-3">
+          <div className="mb-3">
             <Breadcrumbs
               items={[
                 { name: "Attractions", url: "/attractions" },
-                { name: "Vikramshila University Ruins" },
+                { name: "Vikramshila University Ruins", url: "/attractions/vikramshila" },
               ]}
+              currentUrl="/attractions/vikramshila"
             />
           </div>
           <span className="text-[11px] uppercase tracking-[0.25em] font-mono text-gold-400 font-bold block mb-2">
@@ -160,6 +161,12 @@ export default function VikramshilaPage() {
                   className="w-full py-2 rounded-xl text-brown-800 hover:text-brown-950 text-xs font-semibold text-center block"
                 >
                   Hotel Location & Directions →
+                </Link>
+                <Link
+                  href="/attractions"
+                  className="w-full py-2 rounded-xl text-brown-800 hover:text-brown-950 text-xs font-semibold text-center block hover:underline"
+                >
+                  ← Back to All Attractions
                 </Link>
               </div>
 

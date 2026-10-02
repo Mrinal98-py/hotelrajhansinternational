@@ -80,7 +80,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
       items: [
         { label: "Housekeeping", href: "/admin/housekeeping", icon: Sparkles },
         { label: "Maintenance Tickets", href: "/admin/maintenance", icon: Wrench },
-        { label: "Restaurant & POS", href: "/admin/pos", icon: UtensilsCrossed },
+        // { label: "Restaurant & POS", href: "/admin/pos", icon: UtensilsCrossed },
       ],
     },
     {

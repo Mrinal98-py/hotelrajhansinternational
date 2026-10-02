@@ -15,6 +15,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/rooms/ac-deluxe", changeFrequency: "weekly", priority: 0.9 },
     { path: "/rooms/royal-suite", changeFrequency: "weekly", priority: 0.9 },
     { path: "/services", changeFrequency: "weekly", priority: 0.8 },
+    { path: "/services/beauty-parlour", changeFrequency: "weekly", priority: 0.7 },
+    { path: "/services/saloon", changeFrequency: "weekly", priority: 0.7 },
     { path: "/services/room-service", changeFrequency: "weekly", priority: 0.7 },
     { path: "/services/restaurant", changeFrequency: "weekly", priority: 0.7 },
     { path: "/services/laundry", changeFrequency: "weekly", priority: 0.7 },

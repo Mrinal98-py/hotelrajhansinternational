@@ -9,6 +9,8 @@ import { metadata as executiveMetadata } from "../src/app/rooms/ac-executive/pag
 import { metadata as deluxeMetadata } from "../src/app/rooms/ac-deluxe/page";
 import { metadata as suiteMetadata } from "../src/app/rooms/royal-suite/page";
 import { metadata as servicesMetadata } from "../src/app/services/page";
+import { metadata as beautyParlourMetadata } from "../src/app/services/beauty-parlour/page";
+import { metadata as saloonMetadata } from "../src/app/services/saloon/page";
 import { metadata as roomServiceMetadata } from "../src/app/services/room-service/page";
 import { metadata as restaurantServiceMetadata } from "../src/app/services/restaurant/page";
 import { metadata as laundryMetadata } from "../src/app/services/laundry/page";
@@ -77,6 +79,8 @@ const publicPages = [
   { name: "AC Deluxe", metadata: deluxeMetadata, expected: `${siteUrl}/rooms/ac-deluxe` },
   { name: "Royal Suite", metadata: suiteMetadata, expected: `${siteUrl}/rooms/royal-suite` },
   { name: "Services", metadata: servicesMetadata, expected: `${siteUrl}/services` },
+  { name: "Beauty Parlour", metadata: beautyParlourMetadata, expected: `${siteUrl}/services/beauty-parlour` },
+  { name: "Grooming Saloon", metadata: saloonMetadata, expected: `${siteUrl}/services/saloon` },
   { name: "Room Service", metadata: roomServiceMetadata, expected: `${siteUrl}/services/room-service` },
   { name: "Restaurant Service", metadata: restaurantServiceMetadata, expected: `${siteUrl}/services/restaurant` },
   { name: "Laundry Service", metadata: laundryMetadata, expected: `${siteUrl}/services/laundry` },

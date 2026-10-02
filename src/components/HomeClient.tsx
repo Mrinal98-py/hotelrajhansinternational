@@ -855,22 +855,37 @@ export default function HomeClient() {
                     <span className="text-[9px] uppercase tracking-widest font-mono">Beauty</span>
                   </div>
                   <h3 className="font-serif text-xl md:text-2xl text-gold-50 font-medium tracking-wide">
-                    Rajhans Ladies Beauty Parlour
+                    <Link href="/services/beauty-parlour" className="hover:text-gold-200 transition-colors">
+                      Rajhans Ladies Beauty Parlour
+                    </Link>
                   </h3>
                   <p className="text-gold-200/60 text-xs leading-relaxed">
                     Hair, skincare, and beauty treatments without leaving the hotel.
                   </p>
+                </div>
+                <div className="pt-4">
+                  <Link
+                    href="/services/beauty-parlour"
+                    className="text-xs font-semibold text-gold-300 hover:text-white inline-flex items-center gap-1.5 transition-colors"
+                  >
+                    <span>Explore Beauty Parlour</span>
+                    <ArrowRight className="h-3 w-3 text-gold-400" />
+                  </Link>
                 </div>
               </div>
             </div>
 
             {/* Service 2: Saloon */}
             <div className="glass-card rounded-lg overflow-hidden border border-gold-400/10 flex flex-col md:flex-row group">
-              <div className="relative h-[280px] md:h-[350px] md:w-1/2 overflow-hidden bg-paper">
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 border-b md:border-b-0 md:border-r border-gold-400/10 text-gold-300">
-                  <Scissors className="h-10 w-10" />
-                  <span className="text-[10px] uppercase tracking-[0.3em] font-medium">Saloon</span>
-                </div>
+              <div className="relative h-[280px] md:h-[350px] md:w-1/2 overflow-hidden">
+                <Image
+                  src="/images/parlour/BP010.jpg"
+                  alt="Rajhans Grooming Saloon"
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                  sizes="(max-width: 768px) 100vw, 25vw"
+                  loading="lazy"
+                />
               </div>
               <div className="p-6 md:p-8 md:w-1/2 flex flex-col justify-between">
                 <div className="space-y-3">
@@ -879,11 +894,22 @@ export default function HomeClient() {
                     <span className="text-[9px] uppercase tracking-widest font-mono">Grooming</span>
                   </div>
                   <h3 className="font-serif text-xl md:text-2xl text-gold-50 font-medium tracking-wide">
-                    Rajhans Grooming Saloon
+                    <Link href="/services/saloon" className="hover:text-gold-200 transition-colors">
+                      Rajhans Grooming Saloon
+                    </Link>
                   </h3>
                   <p className="text-gold-200/60 text-xs leading-relaxed">
                     Haircuts and grooming for men, open to hotel guests.
                   </p>
+                </div>
+                <div className="pt-4">
+                  <Link
+                    href="/services/saloon"
+                    className="text-xs font-semibold text-gold-300 hover:text-white inline-flex items-center gap-1.5 transition-colors"
+                  >
+                    <span>Explore Grooming Saloon</span>
+                    <ArrowRight className="h-3 w-3 text-gold-400" />
+                  </Link>
                 </div>
               </div>
             </div>
@@ -907,11 +933,22 @@ export default function HomeClient() {
                     <span className="text-[9px] uppercase tracking-widest font-mono">Dining</span>
                   </div>
                   <h3 className="font-serif text-xl md:text-2xl text-gold-50 font-medium tracking-wide">
-                    Takshshila Restaurant
+                    <Link href="/restaurant" className="hover:text-gold-200 transition-colors">
+                      Takshshila Restaurant
+                    </Link>
                   </h3>
                   <p className="text-gold-200/60 text-xs leading-relaxed">
                     Indian, Chinese, and continental meals. Room service available.
                   </p>
+                </div>
+                <div className="pt-4">
+                  <Link
+                    href="/restaurant"
+                    className="text-xs font-semibold text-gold-300 hover:text-white inline-flex items-center gap-1.5 transition-colors"
+                  >
+                    <span>Explore Restaurant</span>
+                    <ArrowRight className="h-3 w-3 text-gold-400" />
+                  </Link>
                 </div>
               </div>
             </div>
@@ -940,6 +977,15 @@ export default function HomeClient() {
                   <p className="text-gold-200/60 text-xs leading-relaxed">
                     Ice cream, sundaes, and shakes in the lobby area.
                   </p>
+                </div>
+                <div className="pt-4">
+                  <Link
+                    href="/facilities"
+                    className="text-xs font-semibold text-gold-300 hover:text-white inline-flex items-center gap-1.5 transition-colors"
+                  >
+                    <span>View Hotel Facilities</span>
+                    <ArrowRight className="h-3 w-3 text-gold-400" />
+                  </Link>
                 </div>
               </div>
             </div>

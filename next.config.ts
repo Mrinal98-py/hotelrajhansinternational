@@ -22,6 +22,16 @@ const nextConfig: NextConfig = {
         destination: "/attractions",
         permanent: true,
       },
+      {
+        source: "/services/parlour",
+        destination: "/services/beauty-parlour",
+        permanent: true,
+      },
+      {
+        source: "/services/grooming-saloon",
+        destination: "/services/saloon",
+        permanent: true,
+      },
     ];
   },
 };

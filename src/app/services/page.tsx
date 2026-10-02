@@ -12,6 +12,7 @@ import {
   Car,
   Clock,
   Sparkles,
+  Scissors,
   Phone,
   ArrowRight,
   ShieldCheck,
@@ -21,20 +22,42 @@ import {
 export const metadata: Metadata = {
   title: "Hotel Services in Bhagalpur | Hotel Rajhans International",
   description:
-    "Explore guest services at Hotel Rajhans International, Bhagalpur. 24/7 room service, Takshshila Restaurant, laundry & pressing, high-speed Wi-Fi, and railway transfers.",
+    "Explore guest services at Hotel Rajhans International, Bhagalpur. 24/7 room service, Takshshila Restaurant, beauty parlour, grooming saloon, laundry, Wi-Fi, and railway transfers.",
   alternates: {
     canonical: getCanonicalUrl("/services"),
   },
   openGraph: {
     title: "Hotel Services in Bhagalpur | Hotel Rajhans International",
     description:
-      "Comprehensive hospitality services including 24/7 room dining, laundry, fine cuisine, and high-speed internet at Kachari Chowk, Bhagalpur.",
+      "Comprehensive hospitality services including 24/7 room dining, beauty parlour, grooming saloon, laundry, fine cuisine, and high-speed internet at Kachari Chowk, Bhagalpur.",
     url: getCanonicalUrl("/services"),
     type: "website",
   },
 };
 
 const SERVICES = [
+  {
+    slug: "beauty-parlour",
+    title: "Rajhans Ladies Beauty Parlour",
+    subtitle: "Hair, Skincare & Beauty Treatments",
+    description:
+      "Hair, skincare, and beauty treatments without leaving the hotel. Exclusive ladies sanctuary featuring professional styling, bridal packages, and rejuvenating facials.",
+    image: "/images/parlour/BP002.jpg",
+    icon: Sparkles,
+    href: "/services/beauty-parlour",
+    highlights: ["Hair Styling & Spa", "Facials & Skin Rejuvenation", "Bridal & Party Makeovers", "Private Ladies Sanctuary"],
+  },
+  {
+    slug: "saloon",
+    title: "Rajhans Grooming Saloon",
+    subtitle: "Saloon & Men's Grooming",
+    description:
+      "Haircuts and grooming for men, open to hotel guests. Classic cuts, beard styling, head massages, and refreshing face care right on hotel premises.",
+    image: "/images/parlour/BP010.jpg",
+    icon: Scissors,
+    href: "/services/saloon",
+    highlights: ["Men's Precision Haircuts", "Beard Trim & Styling", "Relaxing Head Massage", "On-Premises Convenience"],
+  },
   {
     slug: "room-service",
     title: "24/7 Room Service",

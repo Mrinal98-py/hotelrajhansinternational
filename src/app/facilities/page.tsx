@@ -17,6 +17,8 @@ import {
   Building,
   CalendarCheck,
   ArrowRight,
+  Sparkles,
+  Scissors,
 } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -103,6 +105,26 @@ const FACILITIES = [
     link: "/services/laundry",
     linkText: "View Laundry Options",
     image: "/images/executive/Room-003.jpg",
+  },
+  {
+    title: "Rajhans Ladies Beauty Parlour",
+    category: "Wellness & Beauty",
+    description:
+      "Hair, skincare, and beauty treatments without leaving the hotel. Dedicated ladies sanctuary offering bridal makeup, styling, and facials.",
+    icon: Sparkles,
+    link: "/services/beauty-parlour",
+    linkText: "Explore Beauty Parlour",
+    image: "/images/parlour/BP002.jpg",
+  },
+  {
+    title: "Rajhans Grooming Saloon",
+    category: "Men's Grooming",
+    description:
+      "Haircuts and grooming for men, open to hotel guests. Classic cuts, beard trimming, and head massages right on hotel premises.",
+    icon: Scissors,
+    link: "/services/saloon",
+    linkText: "Explore Grooming Saloon",
+    image: "/images/parlour/BP010.jpg",
   },
   {
     title: "Railway Station Transfer Assistance",

@@ -124,6 +124,13 @@ export default function SiteHeader() {
                     </Link>
                     <div className="h-px bg-brown-900/10 my-1" />
                     <Link
+                      href="/rooms/standard-room"
+                      className="block px-3 py-2 rounded-lg text-xs hover:bg-brown-900/10"
+                    >
+                      <div className="font-semibold text-brown-900">Standard Room</div>
+                      <div className="text-[10px] text-brown-600">From ₹2,699 • Prime Value & Comfort</div>
+                    </Link>
+                    <Link
                       href="/rooms/ac-executive"
                       className="block px-3 py-2 rounded-lg text-xs hover:bg-brown-900/10"
                     >
@@ -297,6 +304,9 @@ export default function SiteHeader() {
               </Link>
               <Link href="/rooms" className="p-2.5 rounded-lg bg-cream/50 hover:bg-cream">
                 Rooms & Suites
+              </Link>
+              <Link href="/rooms/standard-room" className="p-2 rounded-lg text-xs text-brown-700 pl-4">
+                • Standard Room
               </Link>
               <Link href="/rooms/ac-executive" className="p-2 rounded-lg text-xs text-brown-700 pl-4">
                 • AC Executive

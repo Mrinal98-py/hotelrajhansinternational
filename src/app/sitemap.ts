@@ -11,6 +11,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   }[] = [
     { path: "/", changeFrequency: "daily", priority: 1.0 },
     { path: "/rooms", changeFrequency: "daily", priority: 0.9 },
+    { path: "/rooms/standard-room", changeFrequency: "weekly", priority: 0.9 },
     { path: "/rooms/ac-executive", changeFrequency: "weekly", priority: 0.9 },
     { path: "/rooms/ac-deluxe", changeFrequency: "weekly", priority: 0.9 },
     { path: "/rooms/royal-suite", changeFrequency: "weekly", priority: 0.9 },

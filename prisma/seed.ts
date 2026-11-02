@@ -28,6 +28,25 @@ async function main() {
   // 3. Seed Rooms & Pricing
   const roomData = [
     {
+      name: "Standard Room",
+      slug: "standard-room",
+      type: "STANDARD" as const,
+      description: "Comfortable and budget-friendly accommodation designed for solo travelers and couples with essential amenities.",
+      capacity: 2,
+      basePriceSingle: 2699,
+      basePriceDouble: 3299,
+      weekendPrice: null,
+      holidayPrice: null,
+      extraBedPrice: 500,
+      taxPercentage: 12,
+      status: "AVAILABLE" as const,
+      displayOrder: 1,
+      amenities: ["Comfort Bed", "Study Table", "Air Conditioning", "LED TV", "Free Wi-Fi", "Wardrobe", "Attached Bathroom"],
+      images: [
+        { url: "/images/standard/Standard001.jpg", alt: "Standard Room Main", isPrimary: true },
+      ],
+    },
+    {
       name: "Executive Room",
       slug: "executive-room",
       type: "EXECUTIVE" as const,
@@ -40,7 +59,7 @@ async function main() {
       extraBedPrice: 500,
       taxPercentage: 12,
       status: "AVAILABLE" as const,
-      displayOrder: 1,
+      displayOrder: 2,
       amenities: ["Standard Bed", "Study Table", "Fruit Basket", "TV", "Large Wardrobe", "A/C"],
       images: [
         { url: "/ranjhans/images/executive/Room-001.jpg", alt: "Executive Room Main", isPrimary: true },
@@ -59,7 +78,7 @@ async function main() {
       extraBedPrice: 600,
       taxPercentage: 12,
       status: "AVAILABLE" as const,
-      displayOrder: 2,
+      displayOrder: 3,
       amenities: ["Pocket Spring Bed", "Study Table", "Fruit Basket", "TV", "Large Wardrobe", "A/C"],
       images: [
         { url: "/ranjhans/images/deluxe/Delux001.jpg", alt: "Deluxe Room Main", isPrimary: true },
@@ -78,7 +97,7 @@ async function main() {
       extraBedPrice: 800,
       taxPercentage: 18,
       status: "AVAILABLE" as const,
-      displayOrder: 3,
+      displayOrder: 4,
       amenities: ["Bedroom + Living Room", "Double Washroom", "Mini Fridge", "Study Table", "Sofa Seating Area", "Fruit Basket", "A/C"],
       images: [
         { url: "/ranjhans/images/suite/SR001.jpg", alt: "Royal Suite Living Room", isPrimary: true },
@@ -99,7 +118,7 @@ async function main() {
       extraBedPrice: 0,
       taxPercentage: 12,
       status: "AVAILABLE" as const,
-      displayOrder: 4,
+      displayOrder: 5,
       amenities: ["Individual Lockers", "Air Conditioning", "Shared Bathrooms", "WiFi"],
       images: [
         { url: "/ranjhans/images/dormitory/DM005.jpg", alt: "Dormitory Hall", isPrimary: true },

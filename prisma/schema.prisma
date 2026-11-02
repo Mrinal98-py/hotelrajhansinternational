@@ -23,6 +23,7 @@ enum Role {
 }
 
 enum RoomType {
+  STANDARD
   EXECUTIVE
   DELUXE
   ROYAL_SUITE

@@ -21,14 +21,14 @@ import {
 export const metadata: Metadata = {
   title: "Rooms & Suites in Bhagalpur | Hotel Rajhans International",
   description:
-    "Explore luxury accommodation at Hotel Rajhans International, Bhagalpur. Choose AC Executive rooms, AC Deluxe rooms, or Royal Suites with modern amenities, fine dining, and prime MG Road location.",
+    "Explore luxury accommodation at Hotel Rajhans International, Bhagalpur. Choose Standard rooms, AC Executive rooms, AC Deluxe rooms, or Royal Suites with modern amenities, fine dining, and prime MG Road location.",
   alternates: {
     canonical: getCanonicalUrl("/rooms"),
   },
   openGraph: {
     title: "Rooms & Suites in Bhagalpur | Hotel Rajhans International",
     description:
-      "Comfortable and luxury stays in Bhagalpur. Choose from AC Executive, AC Deluxe, and Royal Suite rooms near Bhagalpur Junction.",
+      "Comfortable and luxury stays in Bhagalpur. Choose from Standard rooms, AC Executive, AC Deluxe, and Royal Suite rooms near Bhagalpur Junction.",
     url: getCanonicalUrl("/rooms"),
     type: "website",
     images: [
@@ -43,6 +43,30 @@ export const metadata: Metadata = {
 };
 
 const ROOM_DATA = [
+  {
+    slug: "standard-room",
+    typeKey: "STANDARD",
+    name: "Standard Room",
+    tagline: "Essential Comfort & Great Value",
+    description:
+      "Smart, clean, and budget-friendly accommodation designed for solo travelers and couples. Features climate-controlled air conditioning, comfortable queen bed, study table, LED TV, wardrobe, and complimentary high-speed Wi-Fi.",
+    image: "/images/standard/Standard001.jpg",
+    alt: "Standard Room at Hotel Rajhans International Bhagalpur",
+    singlePrice: 2699,
+    doublePrice: 3299,
+    occupancy: "1 - 2 Guests",
+    bedType: "Comfort Queen Bed",
+    features: [
+      "Comfort Queen Bed",
+      "Study Table & Chair",
+      "Air Conditioning (Climate Controlled)",
+      "LED TV with HD Satellite Channels",
+      "Wardrobe & Luggage Storage",
+      "Complimentary High-Speed Wi-Fi",
+      "Attached Private Bathroom with Shower",
+      "24/7 Room Service & Housekeeping",
+    ],
+  },
   {
     slug: "ac-executive",
     typeKey: "EXECUTIVE",

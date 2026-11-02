@@ -69,6 +69,11 @@ export default function SiteFooter() {
                 </Link>
               </li>
               <li>
+                <Link href="/rooms/standard-room" className="hover:text-brown-950 hover:underline">
+                  Standard Rooms
+                </Link>
+              </li>
+              <li>
                 <Link href="/rooms/ac-executive" className="hover:text-brown-950 hover:underline">
                   AC Executive Rooms
                 </Link>

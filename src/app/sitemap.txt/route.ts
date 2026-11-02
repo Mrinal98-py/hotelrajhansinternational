@@ -8,6 +8,7 @@ export async function GET() {
   const paths = [
     "/",
     "/rooms",
+    "/rooms/standard-room",
     "/rooms/ac-executive",
     "/rooms/ac-deluxe",
     "/rooms/royal-suite",

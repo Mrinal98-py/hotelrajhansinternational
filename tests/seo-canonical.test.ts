@@ -5,6 +5,7 @@ import nextConfig from "../next.config";
 
 import { metadata as homeMetadata } from "../src/app/page";
 import { metadata as roomsMetadata } from "../src/app/rooms/page";
+import { metadata as standardMetadata } from "../src/app/rooms/standard-room/page";
 import { metadata as executiveMetadata } from "../src/app/rooms/ac-executive/page";
 import { metadata as deluxeMetadata } from "../src/app/rooms/ac-deluxe/page";
 import { metadata as suiteMetadata } from "../src/app/rooms/royal-suite/page";
@@ -75,6 +76,7 @@ console.log("✔ Canonical URL normalization and parameter stripping verified.")
 const publicPages = [
   { name: "Homepage", metadata: homeMetadata, expected: `${siteUrl}/` },
   { name: "Rooms Overview", metadata: roomsMetadata, expected: `${siteUrl}/rooms` },
+  { name: "Standard Room", metadata: standardMetadata, expected: `${siteUrl}/rooms/standard-room` },
   { name: "AC Executive", metadata: executiveMetadata, expected: `${siteUrl}/rooms/ac-executive` },
   { name: "AC Deluxe", metadata: deluxeMetadata, expected: `${siteUrl}/rooms/ac-deluxe` },
   { name: "Royal Suite", metadata: suiteMetadata, expected: `${siteUrl}/rooms/royal-suite` },

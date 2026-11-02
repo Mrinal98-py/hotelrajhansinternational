@@ -37,14 +37,15 @@ export default function BookingModal({
   useEffect(() => {
     if (isOpen) {
       let normalized = (selectedRoomDefault || "executive").toLowerCase();
-      if (normalized.includes("executive")) normalized = "executive";
+      if (normalized.includes("standard")) normalized = "standard";
+      else if (normalized.includes("executive")) normalized = "executive";
       else if (normalized.includes("deluxe")) normalized = "deluxe";
       else if (normalized.includes("royal") || normalized.includes("suite")) normalized = "royal";
       else if (normalized.includes("dormitory") || normalized.includes("group")) normalized = "dormitory";
 
       // If requested room is not available, default to the first available category
       if (roomStatuses && roomStatuses[normalized] !== "AVAILABLE") {
-        const availableAlt = ["executive", "deluxe", "royal", "dormitory"].find(
+        const availableAlt = ["standard", "executive", "deluxe", "royal", "dormitory"].find(
           (k) => roomStatuses[k] === "AVAILABLE"
         );
         if (availableAlt) {
@@ -265,6 +266,14 @@ export default function BookingModal({
                         onChange={handleChange}
                         className="w-full bg-paper border border-gold-400/20 rounded-lg py-2.5 px-3 text-gold-100 focus:outline-none focus:border-gold-400/50 transition-colors text-sm"
                       >
+                        {(!roomStatuses || roomStatuses.standard !== "DEACTIVATED") && (
+                          <option
+                            value="standard"
+                            disabled={Boolean(roomStatuses && roomStatuses.standard !== "AVAILABLE")}
+                          >
+                            Standard Room {roomStatuses?.standard === "OCCUPIED" ? "— [Occupied]" : roomStatuses?.standard === "MAINTENANCE" ? "— [Under Maintenance]" : "(₹2,699 - ₹3,299)"}
+                          </option>
+                        )}
                         {(!roomStatuses || roomStatuses.executive !== "DEACTIVATED") && (
                           <option
                             value="executive"

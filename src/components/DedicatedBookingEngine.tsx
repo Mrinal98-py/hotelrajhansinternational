@@ -32,6 +32,7 @@ export default function DedicatedBookingEngine() {
   // Normalize initial room
   const normalizeRoom = (val: string) => {
     const lower = val.toLowerCase();
+    if (lower.includes("standard")) return "standard";
     if (lower.includes("deluxe")) return "deluxe";
     if (lower.includes("royal") || lower.includes("suite")) return "royal";
     return "executive";
@@ -50,6 +51,7 @@ export default function DedicatedBookingEngine() {
   });
 
   const [roomRates, setRoomRates] = useState<Record<string, { single: number; double: number }>>({
+    standard: { single: 2699, double: 3299 },
     executive: { single: 3790, double: 4490 },
     deluxe: { single: 3790, double: 4490 },
     royal: { single: 5190, double: 5190 },
@@ -315,8 +317,14 @@ export default function DedicatedBookingEngine() {
               <label className="block text-xs font-bold uppercase tracking-wider text-brown-900">
                 Select Room Category *
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
+                  {
+                    id: "standard",
+                    name: "Standard Room",
+                    price: roomRates.standard?.single || 2699,
+                    desc: "Prime Value • Comfort Bed",
+                  },
                   {
                     id: "executive",
                     name: "AC Executive",

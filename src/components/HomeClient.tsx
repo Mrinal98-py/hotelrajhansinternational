@@ -117,12 +117,14 @@ export default function HomeClient() {
 
   // Dynamic DB Data state with fallbacks matching database baseline
   const [roomRates, setRoomRates] = useState<Record<string, { single: number; double: number }>>({
+    standard: { single: 2699, double: 3299 },
     executive: { single: 3790, double: 4490 },
     deluxe: { single: 3790, double: 4490 },
     royal: { single: 5190, double: 5190 },
   });
 
   const [roomStatuses, setRoomStatuses] = useState<Record<string, string>>({
+    standard: "AVAILABLE",
     executive: "AVAILABLE",
     deluxe: "AVAILABLE",
     royal: "AVAILABLE",
@@ -136,6 +138,14 @@ export default function HomeClient() {
     description: string;
     amenities: string[];
   }>>({
+    standard: {
+      name: "Standard Room",
+      single: 2699,
+      double: 3299,
+      status: "AVAILABLE",
+      description: "Comfortable and budget-friendly accommodation designed for solo travelers and couples.",
+      amenities: ["Comfort Bed", "Study Table", "Air Conditioning", "LED TV", "Free Wi-Fi", "Wardrobe"],
+    },
     executive: {
       name: "Executive Room",
       single: 3790,
@@ -554,7 +564,7 @@ export default function HomeClient() {
             </div>
             <div className="flex flex-col md:items-end gap-2">
               <p className="text-gold-200/60 text-sm max-w-md font-normal leading-relaxed">
-                Three room types. Prices below are per night before taxes.
+                Four room categories. Prices below are per night before taxes.
               </p>
               <Link
                 href="/rooms"
@@ -566,7 +576,85 @@ export default function HomeClient() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Standard Room */}
+            <div className="glass-card rounded-lg overflow-hidden flex flex-col border border-gold-400/10 group">
+              <div className="relative h-[240px] w-full overflow-hidden">
+                <Image
+                  src="/images/standard/Standard001.jpg"
+                  alt={roomsData.standard?.name || "Standard Room"}
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                  sizes="(max-width: 1024px) 100vw, 25vw"
+                  loading="lazy"
+                />
+              </div>
+
+              <div className="p-5 flex-grow flex flex-col justify-between space-y-5">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-baseline gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <h3 className="font-serif text-lg md:text-xl text-gold-50 font-medium tracking-wide">
+                        {roomsData.standard?.name || "Standard Room"}
+                      </h3>
+                      {roomsData.standard?.status && (
+                        <span
+                          className={`text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded font-mono font-semibold border ${
+                            roomsData.standard.status === "AVAILABLE"
+                              ? "bg-emerald-950/60 text-emerald-300 border-emerald-500/30"
+                              : roomsData.standard.status === "OCCUPIED"
+                              ? "bg-red-950/60 text-red-300 border-red-500/30"
+                              : "bg-amber-950/60 text-amber-300 border-amber-500/30"
+                          }`}
+                        >
+                          {roomsData.standard.status}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-gold-300 font-sans text-base font-semibold">
+                        ₹{(roomsData.standard?.single || 2699).toLocaleString()} <span className="text-[10px] text-gold-200/50 font-sans font-normal">/ Single</span>
+                      </p>
+                      <p className="text-gold-200/60 font-sans text-xs">
+                        ₹{(roomsData.standard?.double || 3299).toLocaleString()} <span className="text-[9px] text-gold-200/40 font-sans font-normal">/ Double</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="text-gold-200/60 text-xs leading-relaxed line-clamp-2">
+                    {roomsData.standard?.description || "Comfortable and budget-friendly accommodation."}
+                  </p>
+
+                  <div className="pt-1">
+                    <p className="text-[10px] text-gold-200/40 uppercase tracking-widest mb-1.5 font-semibold">Includes</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {(roomsData.standard?.amenities || ["Comfort Bed", "Study Table", "A/C", "TV", "Wi-Fi"]).slice(0, 4).map((tag) => (
+                        <span key={tag} className="text-[9px] bg-brown-900/5 border border-gold-400/5 text-gold-200/70 py-0.5 px-2 rounded-md">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-3 flex flex-col gap-2">
+                  <Link
+                    href="/rooms/standard-room"
+                    className="w-full py-2 px-3 rounded-lg border border-gold-400/30 text-gold-200 hover:text-white hover:border-gold-400 text-xs font-semibold text-center flex items-center justify-center gap-1 transition-colors"
+                  >
+                    <span>Explore Standard</span>
+                    <ArrowRight className="h-3 w-3 text-gold-400" />
+                  </Link>
+                  <Link
+                    href="/booking?room=standard"
+                    className="w-full py-2 px-3 bg-gradient-to-r from-gold-600 to-gold-400 hover:from-gold-700 hover:to-gold-500 text-brown-900 font-bold uppercase tracking-widest text-[10px] rounded-lg transition-all duration-300 cursor-pointer flex items-center justify-center"
+                  >
+                    Book Room
+                  </Link>
+                </div>
+              </div>
+            </div>
+
             {/* Executive Room */}
             <div className="glass-card rounded-lg overflow-hidden flex flex-col border border-gold-400/10 group">
               <div className="relative h-[280px] w-full overflow-hidden">

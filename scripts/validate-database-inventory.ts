@@ -10,10 +10,12 @@ const EXPECTED_ROOMS = [
   "301", "302", "303", "304", "305", "306", "307", "308", "309",
 ];
 
+const EXPECTED_STANDARD = ["101", "201", "211", "212", "214", "301"];
+
 const EXPECTED_EXECUTIVE = [
-  "101", "103", "104", "105",
-  "201", "203", "204", "205", "211", "212", "214", "215", "216", "217",
-  "301", "303", "304", "305",
+  "103", "104", "105",
+  "203", "204", "205", "215", "216", "217",
+  "303", "304", "305",
 ];
 
 const EXPECTED_DELUXE = [
@@ -39,8 +41,8 @@ export async function validateDatabaseInventory() {
     console.log(`  • ${rt.name} (type: ${rt.type}, ID: ${rt.id})`);
   }
 
-  if (roomTypes.length !== 3) {
-    throw new Error(`Expected exactly 3 Room Categories, found ${roomTypes.length}`);
+  if (roomTypes.length !== 4) {
+    throw new Error(`Expected exactly 4 Room Categories, found ${roomTypes.length}`);
   }
 
   // 2. Validate Physical Rooms Total
@@ -55,16 +57,21 @@ export async function validateDatabaseInventory() {
   }
 
   // 3. Validate Counts by Room Category
+  const standardRooms = physicalRooms.filter((r) => r.roomType.type === "STANDARD");
   const executiveRooms = physicalRooms.filter((r) => r.roomType.type === "EXECUTIVE");
   const deluxeRooms = physicalRooms.filter((r) => r.roomType.type === "DELUXE");
   const suiteRooms = physicalRooms.filter((r) => r.roomType.type === "ROYAL_SUITE");
 
-  console.log(`  • AC EXECUTIVE: ${executiveRooms.length} rooms (Expected: 18)`);
+  console.log(`  • STANDARD:     ${standardRooms.length} rooms (Expected: 6)`);
+  console.log(`  • AC EXECUTIVE: ${executiveRooms.length} rooms (Expected: 12)`);
   console.log(`  • AC DELUXE:    ${deluxeRooms.length} rooms (Expected: 12)`);
   console.log(`  • ROYAL SUITE:  ${suiteRooms.length} rooms (Expected: 3)`);
 
-  if (executiveRooms.length !== 18) {
-    throw new Error(`Executive count mismatch: expected 18, got ${executiveRooms.length}`);
+  if (standardRooms.length !== 6) {
+    throw new Error(`Standard count mismatch: expected 6, got ${standardRooms.length}`);
+  }
+  if (executiveRooms.length !== 12) {
+    throw new Error(`Executive count mismatch: expected 12, got ${executiveRooms.length}`);
   }
   if (deluxeRooms.length !== 12) {
     throw new Error(`Deluxe count mismatch: expected 12, got ${deluxeRooms.length}`);
@@ -91,9 +98,16 @@ export async function validateDatabaseInventory() {
   }
 
   // 5. Validate Exact Room-to-Type Mapping
+  const standardNumbers = standardRooms.map((r) => r.roomNumber);
   const execNumbers = executiveRooms.map((r) => r.roomNumber);
   const deluxeNumbers = deluxeRooms.map((r) => r.roomNumber);
   const suiteNumbers = suiteRooms.map((r) => r.roomNumber);
+
+  for (const st of EXPECTED_STANDARD) {
+    if (!standardNumbers.includes(st)) {
+      throw new Error(`Room ${st} should be in STANDARD category`);
+    }
+  }
 
   for (const en of EXPECTED_EXECUTIVE) {
     if (!execNumbers.includes(en)) {

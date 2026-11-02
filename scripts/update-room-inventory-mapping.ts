@@ -6,33 +6,64 @@ async function main() {
   console.log("Updating Room Types and Physical Room Inventory mapping...");
 
   // 1. Update Room Types names and displayOrder
+  const standardRoom = await prisma.room.upsert({
+    where: { slug: "standard-room" },
+    update: {
+      name: "Standard Room",
+      type: "STANDARD",
+      basePriceSingle: 2699,
+      basePriceDouble: 3299,
+      taxPercentage: 12,
+      displayOrder: 1,
+      totalAvailable: 6,
+      status: "AVAILABLE",
+    },
+    create: {
+      name: "Standard Room",
+      slug: "standard-room",
+      type: "STANDARD",
+      description: "Comfortable and budget-friendly accommodation designed for solo travelers and couples with essential amenities, air conditioning, and prompt room service.",
+      capacity: 2,
+      basePriceSingle: 2699,
+      basePriceDouble: 3299,
+      weekendPrice: null,
+      holidayPrice: null,
+      extraBedPrice: 500,
+      taxPercentage: 12,
+      status: "AVAILABLE",
+      displayOrder: 1,
+      totalAvailable: 6,
+    },
+  });
+
   const execRoom = await prisma.room.findFirst({ where: { slug: "executive-room" } });
   const deluxeRoom = await prisma.room.findFirst({ where: { slug: "deluxe-room" } });
   const suiteRoom = await prisma.room.findFirst({ where: { slug: "royal-suite" } });
 
   if (!execRoom || !deluxeRoom || !suiteRoom) {
-    throw new Error("Missing standard room categories (executive, deluxe, royal suite)");
+    throw new Error("Missing room categories (executive, deluxe, royal suite)");
   }
 
   await prisma.room.update({
     where: { id: execRoom.id },
-    data: { name: "AC Executive", displayOrder: 1 },
+    data: { name: "AC Executive", displayOrder: 2, totalAvailable: 12 },
   });
 
   await prisma.room.update({
     where: { id: deluxeRoom.id },
-    data: { name: "AC Deluxe", displayOrder: 2 },
+    data: { name: "AC Deluxe", displayOrder: 3, totalAvailable: 12 },
   });
 
   await prisma.room.update({
     where: { id: suiteRoom.id },
-    data: { name: "Royal Suite", displayOrder: 3 },
+    data: { name: "Royal Suite", displayOrder: 4, totalAvailable: 3 },
   });
 
-  console.log("Updated Room Type names: AC Executive, AC Deluxe, Royal Suite");
+  console.log("Updated Room Type names: Standard Room, AC Executive, AC Deluxe, Royal Suite");
 
   // Room type map by code
   const typeMap: Record<string, string> = {
+    STANDARD: standardRoom.id,
     EXECUTIVE: execRoom.id,
     DELUXE: deluxeRoom.id,
     ROYAL_SUITE: suiteRoom.id,
@@ -40,25 +71,30 @@ async function main() {
 
   // Exact 33 rooms mapping
   const physicalRoomDefs = [
-    // AC EXECUTIVE (18 rooms)
-    // Floor 1 (4)
-    { roomNumber: "101", floor: 1, type: "EXECUTIVE" },
+    // STANDARD ROOM (6 rooms)
+    // Floor 1 (1)
+    { roomNumber: "101", floor: 1, type: "STANDARD" },
+    // Floor 2 (4)
+    { roomNumber: "201", floor: 2, type: "STANDARD" },
+    { roomNumber: "211", floor: 2, type: "STANDARD" },
+    { roomNumber: "212", floor: 2, type: "STANDARD" },
+    { roomNumber: "214", floor: 2, type: "STANDARD" },
+    // Floor 3 (1)
+    { roomNumber: "301", floor: 3, type: "STANDARD" },
+
+    // AC EXECUTIVE (12 rooms)
+    // Floor 1 (3)
     { roomNumber: "103", floor: 1, type: "EXECUTIVE" },
     { roomNumber: "104", floor: 1, type: "EXECUTIVE" },
     { roomNumber: "105", floor: 1, type: "EXECUTIVE" },
-    // Floor 2 (10)
-    { roomNumber: "201", floor: 2, type: "EXECUTIVE" },
+    // Floor 2 (6)
     { roomNumber: "203", floor: 2, type: "EXECUTIVE" },
     { roomNumber: "204", floor: 2, type: "EXECUTIVE" },
     { roomNumber: "205", floor: 2, type: "EXECUTIVE" },
-    { roomNumber: "211", floor: 2, type: "EXECUTIVE" },
-    { roomNumber: "212", floor: 2, type: "EXECUTIVE" },
-    { roomNumber: "214", floor: 2, type: "EXECUTIVE" },
     { roomNumber: "215", floor: 2, type: "EXECUTIVE" },
     { roomNumber: "216", floor: 2, type: "EXECUTIVE" },
     { roomNumber: "217", floor: 2, type: "EXECUTIVE" },
-    // Floor 3 (4)
-    { roomNumber: "301", floor: 3, type: "EXECUTIVE" },
+    // Floor 3 (3)
     { roomNumber: "303", floor: 3, type: "EXECUTIVE" },
     { roomNumber: "304", floor: 3, type: "EXECUTIVE" },
     { roomNumber: "305", floor: 3, type: "EXECUTIVE" },

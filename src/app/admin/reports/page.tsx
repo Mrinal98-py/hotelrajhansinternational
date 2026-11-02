@@ -138,6 +138,7 @@ export default function AdminReportsPage() {
             className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
           >
             <option value="ALL">All Categories</option>
+            <option value="STANDARD">Standard</option>
             <option value="DELUXE">Deluxe</option>
             <option value="EXECUTIVE">Executive</option>
             <option value="SUITE">Suite</option>
